@@ -160,7 +160,6 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
 
         UInt_t iEdge_Side = 0;           // 0
         R3BTCalModulePar* par_Refs = fTCalPar->GetModuleParAt(iDetector+1,iFpga, iEdge_Side+1);
-
         if(NULL == par_Refs ) {continue;}
 
         // Convert TDC to [ns] ...
@@ -195,11 +194,20 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
 
         auto map1 = (R3BRpcMappedData*)(fMappedDataCA->At(i));
         UInt_t iDetector = map1->GetDetId();
-
+ 
+        UInt_t iFpga;
+	if(map1->GetChannelId() == 7 ){
+    		iFpga = 5;
+        }
+        else {
+            iFpga = map1->GetChannelId();   // now 1..4
+        }
+       
+        R3BTCalModulePar* par_Refs = fTCalPar->GetModuleParAt(iDetector+1,iFpga,0+1);
 	if(iDetector == 2){
           TClonesArray& clref = *fRpcPreCalDataCA;
 	  Int_t size = clref.GetEntriesFast();
-	  	new (clref[size]) R3BRpcPreCalData(2,map1->GetChannelId(),Ref_vec[map1->GetChannelId()-1].time , 0, 0);
+	  	new (clref[size]) R3BRpcPreCalData(2,map1->GetChannelId(),par_Refs->GetTimeVFTX(map1->GetFineTime()) , 0, 0);
 	}
 
         //loop over strip data

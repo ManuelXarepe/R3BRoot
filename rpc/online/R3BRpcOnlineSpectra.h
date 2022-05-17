@@ -145,13 +145,9 @@ class R3BRpcOnlineSpectra : public FairTask
     TClonesArray* fHitDataItems;
     TClonesArray* fPmtHitDataItems;
 
-    Float_t bar_1_hits[90]={0.0};
-    Float_t bar_2_hits[90]={0.0};
-    Float_t bar_3_hits[90]={0.0};
 
-
-    Float_t rpcHitMatrix[41][50] = {{0.0}};
     Float_t meanCharges[41][50]  = {{0.0}};
+    Float_t stripHitsVec[41] =     {0.0};
 
 
     Int_t counts=0;
@@ -292,9 +288,9 @@ class R3BRpcOnlineSpectra : public FairTask
 
     /*--------- Efficiency Histograms ----------*/
     TH1F *stripMultHisto;
-    TH2F *bar_1_efficiency_pos_corr;
-    TH2F *bar_2_efficiency_pos_corr;
-    TH2F *bar_3_efficiency_pos_corr;
+    TH1F *hEfficiencyHisto;
+    TH1F *hStripEffHisto;
+    TH1F *hBarEffHisto;
 
     TLatex *tex1,*tex2;
 

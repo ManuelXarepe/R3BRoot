@@ -156,15 +156,14 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
          } 
       	 if(ichn_left == ichn_right){
 
-          double position = ((((time_left-time_right)/2. - (fParCont1->GetAt(inum)-400)*40./800.)*800./40.)
-                  /(fParCont2->GetAt(inum) - fParCont1->GetAt(inum)))*1500;// - fParCont4->GetAt(inum);
+          double position = ((time_left-time_right)*CSTRIP/2. - 10*(fParCont1->GetAt(inum)-200));
     
           double charge =  (charge_left + charge_right)/2.;
 
-          double time = (time_left + time_right)/2. - fParCont3->GetAt(inum);
+          double time = (time_left + time_right)/2.; //- fParCont3->GetAt(inum);
 	
-	  auto tof = fTimeStitch->GetTime(time - fR3BEventHeader->GetTStart());
-          AddHitStrip(iDetector,ichn_right,time,position,charge,tof);
+          auto tof = fTimeStitch->GetTime(time - fR3BEventHeader->GetTStart(), "trb", "vftx");
+	  AddHitStrip(iDetector,ichn_right,time,position,charge,tof);
         }
 
 	}
@@ -176,7 +175,7 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
 
          double time = (map1->GetTimeR_B() + map1->GetTimeL_T())/2.;
 
-         auto tof = fTimeStitch->GetTime(time - fR3BEventHeader->GetTStart());
+         auto tof = fTimeStitch->GetTime(time - fR3BEventHeader->GetTStart(), "trb", "vftx");
 
          AddHitStrip(iDetector,map1->GetChannelId(),time,position,charge,tof);
 

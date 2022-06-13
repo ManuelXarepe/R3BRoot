@@ -157,6 +157,8 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
       	 if(ichn_left == ichn_right){
 
           double position = ((time_left-time_right)*CSTRIP/2. - 10*(fParCont1->GetAt(inum)-200));
+//          double position = ((time_left-time_right)*CSTRIP/2. - (fParCont1->GetAt(inum)-2000));
+//          double position = ((time_left-time_right)*CSTRIP/2. );
     
           double charge =  (charge_left + charge_right)/2.;
 

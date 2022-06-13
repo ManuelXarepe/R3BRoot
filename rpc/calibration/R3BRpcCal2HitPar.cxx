@@ -23,6 +23,7 @@
 #include "FairRuntimeDb.h"
 
 #include "R3BRpcCal2HitPar.h"
+#include "R3BRpcCal2Hit.h"
 #include "R3BRpcCalData.h"
 
 #include "R3BRpcHitPar.h"
@@ -161,7 +162,7 @@ void R3BRpcCal2HitPar::Exec(Option_t* opt)
               fhPos[inum] = new TH1F(strName, "", 750,0.,1500.);
           }
           else{
-              fhPos[inum] = new TH1F(strName, "", 400,-2000.,2000.);
+              fhPos[inum] = new TH1F(strName, "", 4000,-2000.,2000.);
           }
 
       }
@@ -175,10 +176,10 @@ void R3BRpcCal2HitPar::Exec(Option_t* opt)
       if(ichn_left == ichn_right){
         
         if(!fRpcCalib){
-            fhPos[inum]->Fill((time_left-time_right)/2. - 10*(fHitPar->GetCalParams1()->GetAt(inum)-200));
+            fhPos[inum]->Fill((time_left-time_right)*CSTRIP/2. -(fHitPar->GetCalParams1()->GetAt(inum)-2000));
         }
         else{
-            fhPos[inum]->Fill((time_left - time_right)/2.);
+            fhPos[inum]->Fill((time_left - time_right)*CSTRIP/2.);
         }
         fhTime[inum]->Fill((time_left + time_right)/2.); 
       }
@@ -230,17 +231,12 @@ void R3BRpcCal2HitPar::CalculateParsStrip(){
         fhPos[t]->GetBinContent(bin_max + 1) )/120.;
 
         for(int i = 1; i <= bin_max; i++){
+		std::cout << i << std::endl;
             float mean = (fhPos[t]->GetBinContent(i-1) + fhPos[t]->GetBinContent(i) + fhPos[t]->GetBinContent(i+1))/3.;
-            if (fhPos[t]->GetBinContent(i) >= threshold && mean >= threshold){
+            if (fhPos[t]->GetBinContent(i) >= threshold /*&& mean >= threshold*/){
                 fHitPar->SetCalParams1(i,t);
                 break;
             }                
-        }
-        for(int i = 800; i > bin_max; i--){
-            if (fhPos[t]->GetBinContent(i) >= threshold){
-                fHitPar->SetCalParams2(i,t);
-                break;
-            }
         }
     }
 

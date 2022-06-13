@@ -35,6 +35,7 @@
 
 #include "TClonesArray.h"
 #include "TMath.h"
+#include "TRandom3.h"
 
 #include <iostream>
 #include <numeric>
@@ -300,7 +301,7 @@ void R3BTofDCal2Hit::Exec(Option_t* option)
 
     std::vector<hit> event;
 
-    Int_t nHits = fCalItems->GetEntries();
+    Int_t nHits = fCalItems->GetEntriesFast();
     LOG(DEBUG) << "Leading and trailing edges in this event: " << nHits;
     if (nHits == 0)
         events_wo_tofd_hits++;
@@ -330,7 +331,7 @@ void R3BTofDCal2Hit::Exec(Option_t* option)
 
     // Build trigger map.
     std::vector<R3BTofdCalData const*> trig_map;
-    for (int i = 0; i < fCalTriggerItems->GetEntries(); ++i)
+    for (int i = 0; i < fCalTriggerItems->GetEntriesFast(); ++i)
     {
         auto trig = (R3BTofdCalData const*)fCalTriggerItems->At(i);
         if (trig_map.size() < trig->GetBarId())
@@ -502,12 +503,14 @@ void R3BTofDCal2Hit::Exec(Option_t* option)
                 if (iPlane == 1 || iPlane == 3)
                 {
                     xp = -detector_width / 2 + (paddle_width + air_gap_paddles) / 2 +
-                         (iBar - 1) * (paddle_width + air_gap_paddles);
+                         (iBar - 1) * (paddle_width + air_gap_paddles) +
+                         gRandom->Uniform(-paddle_width / 2., paddle_width / 2.);
                 }
                 if (iPlane == 2 || iPlane == 4)
                 {
                     xp = -detector_width / 2 + (paddle_width + air_gap_paddles) +
-                         (iBar - 1) * (paddle_width + air_gap_paddles);
+                         (iBar - 1) * (paddle_width + air_gap_paddles) +
+                         gRandom->Uniform(-paddle_width / 2., paddle_width / 2.);
                 }
 
                 Double_t para[4];

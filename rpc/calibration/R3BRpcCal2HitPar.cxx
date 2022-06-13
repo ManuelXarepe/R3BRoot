@@ -231,7 +231,7 @@ void R3BRpcCal2HitPar::CalculateParsStrip(){
         fhPos[t]->GetBinContent(bin_max + 1) )/120.;
 
         for(int i = 1; i <= bin_max; i++){
-		std::cout << i << std::endl;
+            //std::cout << i << std::endl;
             float mean = (fhPos[t]->GetBinContent(i-1) + fhPos[t]->GetBinContent(i) + fhPos[t]->GetBinContent(i+1))/3.;
             if (fhPos[t]->GetBinContent(i) >= threshold /*&& mean >= threshold*/){
                 fHitPar->SetCalParams1(i,t);

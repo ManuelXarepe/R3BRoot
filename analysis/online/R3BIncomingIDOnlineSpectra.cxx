@@ -21,6 +21,7 @@
 #include "R3BEventHeader.h"
 #include "R3BFrsData.h"
 #include "R3BLogger.h"
+#include "R3BLosHitData.h"
 #include "R3BMwpcHitData.h"
 #include "R3BTGeoPar.h"
 
@@ -46,18 +47,21 @@ R3BIncomingIDOnlineSpectra::R3BIncomingIDOnlineSpectra()
 R3BIncomingIDOnlineSpectra::R3BIncomingIDOnlineSpectra(const TString& name, Int_t iVerbose)
     : FairTask(name, iVerbose)
     , fHitFrs(NULL)
+    , fHitLos(NULL)
     , fMwpc0HitDataCA(NULL)
     , fMwpc1HitDataCA(NULL)
     , fNEvents(0)
+    , fTpat(-1)
     , fStaId(1)
     , fMin_Z(0.)
     , fMax_Z(20.)
     , fMin_Aq(1.6)
-    , fMax_Aq(2.9)
+    , fMax_Aq(3.9)
     , fMin_Z_gate(0.)
     , fMax_Z_gate(20.)
     , fMin_Aq_gate(1.6)
-    , fMax_Aq_gate(2.9)
+    , fMax_Aq_gate(3.9)
+    , header(nullptr)
 {
 }
 
@@ -66,6 +70,8 @@ R3BIncomingIDOnlineSpectra::~R3BIncomingIDOnlineSpectra()
     R3BLOG(INFO, "");
     if (fHitFrs)
         delete fHitFrs;
+    if (fHitLos)
+        delete fHitLos;
     if (fMwpc0HitDataCA)
         delete fMwpc0HitDataCA;
     if (fMwpc1HitDataCA)
@@ -96,9 +102,14 @@ InitStatus R3BIncomingIDOnlineSpectra::Init()
     FairRunOnline* run = FairRunOnline::Instance();
     run->GetHttpServer()->Register("", this);
 
+    header = (R3BEventHeader*)mgr->GetObject("EventHeader.");
+    R3BLOG_IF(ERROR, !header, "Branch EventHeader. not found");
+
     // get access to mapped data of FRS
     fHitFrs = (TClonesArray*)mgr->GetObject("FrsData");
     R3BLOG_IF(FATAL, !fHitFrs, "Branch FrsData not found");
+    fHitLos = (TClonesArray*)mgr->GetObject("LosHit");
+    R3BLOG_IF(FATAL, !fHitLos, "Branch LosHitData not found");
     fMwpc0HitDataCA = (TClonesArray*)mgr->GetObject("Mwpc0HitData");
     R3BLOG_IF(FATAL, !fMwpc0HitDataCA, "Branch fMwpc0HitDataCA not found");
     fMwpc1HitDataCA = (TClonesArray*)mgr->GetObject("Mwpc1HitData");
@@ -127,6 +138,24 @@ InitStatus R3BIncomingIDOnlineSpectra::Init()
     fh1_beta->SetLineColor(1);
     fh1_beta->Draw("");
 
+    cTof = new TCanvas("TofRaw_frs", "TofRaw info", 10, 10, 800, 700);
+
+    Name1 = "fh1_tofraw_frs";
+    Name2 = "FRS: Raw Tof";
+    fh1_tof = new TH1F(Name1, Name2, 20000, -50000, 50000);
+    fh1_tof->GetXaxis()->SetTitle("ToF [ns]");
+    fh1_tof->GetYaxis()->SetTitle("Counts");
+    fh1_tof->GetYaxis()->SetTitleOffset(1.15);
+    fh1_tof->GetXaxis()->CenterTitle(true);
+    fh1_tof->GetYaxis()->CenterTitle(true);
+    fh1_tof->GetXaxis()->SetLabelSize(0.045);
+    fh1_tof->GetXaxis()->SetTitleSize(0.045);
+    fh1_tof->GetYaxis()->SetLabelSize(0.045);
+    fh1_tof->GetYaxis()->SetTitleSize(0.045);
+    fh1_tof->SetFillColor(2);
+    fh1_tof->SetLineColor(1);
+    fh1_tof->Draw("");
+
     // Hit data, brho
     cBrho = new TCanvas("Brho_frs", "Brho info", 10, 10, 800, 700);
 
@@ -146,7 +175,7 @@ InitStatus R3BIncomingIDOnlineSpectra::Init()
     fh1_brho->SetLineColor(1);
     fh1_brho->Draw("");
 
-    // Hit data, Xs2_vs_Tof
+    // Hit data, Xs2_vs_Beta
     cXs2vsBeta = new TCanvas("Xs2_vs_beta_frs", "Xs2_vs_Beta 2D info", 10, 10, 800, 700);
 
     Name1 = "fh2_Xs2_vs_beta_frs";
@@ -262,14 +291,60 @@ InitStatus R3BIncomingIDOnlineSpectra::Init()
     fh2_IsoGated_xc_anglec->GetYaxis()->SetTitleSize(0.045);
     fh2_IsoGated_xc_anglec->Draw("colz");
 
-    // MAIN FOLDER-FRS
+    cLosE_Tof = new TCanvas("LosE_Tof", "DeltaE in LOS and Tof", 10, 10, 800, 700);
+
+    Name1 = "LOS-E_vs_ToF";
+    Name2 = "LOS Energy vs Raw ToF (S2-LOS);Raw ToF (S2-LOS) / ns;LOS Z";
+    fh2_LosE_Tof = new TH2F(Name1, Name2, 3000, 0, 3000, 900, 0, 30);
+    fh2_LosE_Tof->GetYaxis()->SetTitleOffset(1.1);
+    fh2_LosE_Tof->GetXaxis()->CenterTitle(true);
+    fh2_LosE_Tof->GetYaxis()->CenterTitle(true);
+    fh2_LosE_Tof->GetXaxis()->SetLabelSize(0.045);
+    fh2_LosE_Tof->GetXaxis()->SetTitleSize(0.045);
+    fh2_LosE_Tof->GetYaxis()->SetLabelSize(0.045);
+    fh2_LosE_Tof->GetYaxis()->SetTitleSize(0.045);
+    fh2_LosE_Tof->Draw("colz");
+
+    cLosE_Tof2 = new TCanvas(
+        "LosE_with_ToF_measurement", "LOS Energy distribution with (black) and without (red) S2", 10, 10, 800, 700);
+
+    Name1 = "LOS-Z_without_S2";
+    Name2 = "LOS Energy with (black) without (red) good S2 hit;LOS Z;Counts";
+    fh1_LosE_withoutTof = new TH1F(Name1, Name2, 900, 0, 30);
+    fh1_LosE_withoutTof->GetYaxis()->SetTitleOffset(1.1);
+    fh1_LosE_withoutTof->GetXaxis()->CenterTitle(true);
+    fh1_LosE_withoutTof->GetYaxis()->CenterTitle(true);
+    fh1_LosE_withoutTof->GetXaxis()->SetLabelSize(0.045);
+    fh1_LosE_withoutTof->GetXaxis()->SetTitleSize(0.045);
+    fh1_LosE_withoutTof->GetYaxis()->SetLabelSize(0.045);
+    fh1_LosE_withoutTof->GetYaxis()->SetTitleSize(0.045);
+    fh1_LosE_withoutTof->SetLineColor(kRed);
+    fh1_LosE_withoutTof->SetLineWidth(2);
+    fh1_LosE_withoutTof->Draw("");
+
+    Name1 = "LOS-Z_with_S2";
+    Name2 = "LOS Energy with (black) without (red) good S2 hit;LOS Z;Counts";
+    fh1_LosE_withTof = new TH1F(Name1, Name2, 900, 0, 30);
+    fh1_LosE_withTof->GetYaxis()->SetTitleOffset(1.1);
+    fh1_LosE_withTof->GetXaxis()->CenterTitle(true);
+    fh1_LosE_withTof->GetYaxis()->CenterTitle(true);
+    fh1_LosE_withTof->GetXaxis()->SetLabelSize(0.045);
+    fh1_LosE_withTof->GetXaxis()->SetTitleSize(0.045);
+    fh1_LosE_withTof->GetYaxis()->SetLabelSize(0.045);
+    fh1_LosE_withTof->GetYaxis()->SetTitleSize(0.045);
+    fh1_LosE_withTof->Draw("same");
+
+    // MAIN FOLDER-INCOMINGID
     TFolder* mainfol = new TFolder("FRS-IncomingID", "FRS incomingID info");
     mainfol->Add(cAoQvsPosS2);
     mainfol->Add(cBeta);
+    mainfol->Add(cTof);
     mainfol->Add(cBrho);
     mainfol->Add(cXs2vsBeta);
     mainfol->Add(cAqvsq);
     mainfol->Add(cIsoGated);
+    mainfol->Add(cLosE_Tof);
+    mainfol->Add(cLosE_Tof2);
     run->AddObject(mainfol);
 
     // Register command to reset histograms
@@ -283,6 +358,7 @@ void R3BIncomingIDOnlineSpectra::Reset_Histo()
     R3BLOG(INFO, "");
     fh2_Pos2vsAoQ_m1->Reset();
     fh1_beta->Reset();
+    fh1_tof->Reset();
     fh1_brho->Reset();
     fh2_Aqvsq->Reset();
     fh2_Xs2vsbeta->Reset();
@@ -290,10 +366,16 @@ void R3BIncomingIDOnlineSpectra::Reset_Histo()
     fh2_IsoGated_Z_xc->Reset();
     fh2_IsoGated_xs2_xc->Reset();
     fh2_IsoGated_xc_anglec->Reset();
+    fh2_LosE_Tof->Reset();
+    fh1_LosE_withTof->Reset();
+    fh1_LosE_withoutTof->Reset();
 }
 
 void R3BIncomingIDOnlineSpectra::Exec(Option_t* option)
 {
+    if ((fTpat >= 0) && (header) && ((header->GetTpat() & fTpat) != fTpat))
+        return;
+
     // Fill Hit data
     if (fHitFrs && fHitFrs->GetEntriesFast() > 0)
     {
@@ -306,6 +388,7 @@ void R3BIncomingIDOnlineSpectra::Exec(Option_t* option)
             if (hit->GetStaId() != fStaId)
                 continue;
             fh2_Pos2vsAoQ_m1->Fill(hit->GetXS2(), hit->GetAq());
+            fh1_tof->Fill(hit->GetTof());
             fh1_beta->Fill(hit->GetBeta());
             fh1_brho->Fill(hit->GetBrho());
             fh2_Aqvsq->Fill(hit->GetAq(), hit->GetZ());
@@ -319,14 +402,12 @@ void R3BIncomingIDOnlineSpectra::Exec(Option_t* option)
                 if (!hit_mw0)
                     continue;
                 auto mwpc0x = hit_mw0->GetX() + fMw0GeoPar->GetPosX() * 10.; // mm
-                auto mwpc0y = hit_mw0->GetY() + fMw0GeoPar->GetPosY() * 10.; // mm
                 for (Int_t iMw1 = 0; iMw1 < nHits_Mw1; iMw1++)
                 {
                     auto hit_mw1 = (R3BMwpcHitData*)fMwpc1HitDataCA->At(iMw1);
                     if (!hit_mw1)
                         continue;
                     auto mwpc1x = hit_mw1->GetX() + fMw1GeoPar->GetPosX() * 10.; // mm
-                    auto mwpc1y = hit_mw1->GetY() + fMw1GeoPar->GetPosY() * 10.; // mm
                     auto XCave = mwpc0x;
                     auto AngleCave =
                         (mwpc0x - mwpc1x) / (fMw0GeoPar->GetPosZ() - fMw1GeoPar->GetPosZ()) / 10. * 1000.; // mrad
@@ -341,9 +422,35 @@ void R3BIncomingIDOnlineSpectra::Exec(Option_t* option)
                     fh2_IsoGated_xc_anglec->Fill(XCave, AngleCave);
                 }
             }
+            // making los pid
+            if (fHitLos && fHitLos->GetEntriesFast() > 0)
+            {
+                Int_t nHitsLos = fHitLos->GetEntriesFast();
+                for (Int_t ihitLos = 0; ihitLos < nHitsLos; ihitLos++)
+                {
+                    R3BLosHitData* hitLos = (R3BLosHitData*)fHitLos->At(ihitLos);
+                    if (!hitLos)
+                        continue;
+                    fh2_LosE_Tof->Fill(hit->GetTof(), hitLos->GetZ());
+                    fh1_LosE_withTof->Fill(hitLos->GetZ());
+                }
+            }
+        } // for hit frs
+    }
+    else // for the case of no ToF in FRS
+    {
+        if (fHitLos && fHitLos->GetEntriesFast() > 0)
+        {
+            Int_t nHitsLos = fHitLos->GetEntriesFast();
+            for (Int_t ihitLos = 0; ihitLos < nHitsLos; ihitLos++)
+            {
+                R3BLosHitData* hitLos = (R3BLosHitData*)fHitLos->At(ihitLos);
+                if (!hitLos)
+                    continue;
+                fh1_LosE_withoutTof->Fill(hitLos->GetZ());
+            }
         }
     }
-
     fNEvents += 1;
 }
 
@@ -352,6 +459,11 @@ void R3BIncomingIDOnlineSpectra::FinishEvent()
     if (fHitFrs)
     {
         fHitFrs->Clear();
+    }
+
+    if (fHitLos)
+    {
+        fHitLos->Clear();
     }
 
     if (fMwpc0HitDataCA)
@@ -371,10 +483,13 @@ void R3BIncomingIDOnlineSpectra::FinishTask()
     {
         cAoQvsPosS2->Write();
         cBeta->Write();
+        cTof->Write();
         cBrho->Write();
         cXs2vsBeta->Write();
         cAqvsq->Write();
         cIsoGated->Write();
+        cLosE_Tof->Write();
+        cLosE_Tof2->Write();
     }
 }
 

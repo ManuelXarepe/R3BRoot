@@ -15,6 +15,7 @@
 // -----               R3BIncomingBeta                    -----
 // -----    Created 10/05/22 by J.L. Rodriguez-Sanchez    -----
 // ------------------------------------------------------------
+#define MAXMULT 64
 
 #include "FairLogger.h"
 #include "FairRootManager.h"
@@ -54,6 +55,7 @@ R3BIncomingBeta::R3BIncomingBeta(const char* name, Int_t iVerbose)
     , fTimeStitch(nullptr)
     , fIncomingID_Par(NULL)
     , fNumDet(1)
+    , fUseTref(kFALSE)
 {
     fToFoffset = new TArrayF(fNumDet);
     fPosS2Left = new TArrayF(fNumDet);
@@ -146,13 +148,15 @@ void R3BIncomingBeta::Exec(Option_t* option)
     Reset();
 
     // --- local variables --- //
-    Double_t timeLosV[fNumDet];
-    Double_t posLosX_cm[fNumDet];
-    Double_t TimeSci2_m1[fNumDet];
-    Double_t PosSci2_m1[fNumDet];
+    Double_t timeLosV[fNumDet][MAXMULT];
+    Double_t posLosX_cm[fNumDet][MAXMULT];
+    Double_t TimeSci2_m1[fNumDet][MAXMULT];
+    Double_t TimeSci2wTref_m1[fNumDet][MAXMULT];
+    Double_t PosSci2_m1[fNumDet][MAXMULT];
     UInt_t nHits = 0;
     Double_t ToFraw_m1 = 0.;
-    Double_t Velo_m1 = 0., Beta_m1 = 0., Gamma_m1 = 0.;
+    Double_t ToFrawwTref_m1 = 0.;
+    Double_t Velo_m1 = 0., VelowTref_m1 = 0., Beta_m1 = 0., Gamma_m1 = 0.;
 
     Int_t multSci2[fNumDet];
     Int_t multLos[fNumDet];
@@ -161,33 +165,41 @@ void R3BIncomingBeta::Exec(Option_t* option)
     {
         multSci2[i] = 0;
         multLos[i] = 0;
-        PosSci2_m1[i] = 0.;
-        TimeSci2_m1[i] = 0.;
-        posLosX_cm[i] = 0.;
-        timeLosV[i] = 0.;
+        for (Int_t m = 0; m < MAXMULT; m++)
+        {
+            PosSci2_m1[i][m] = 0.;
+            TimeSci2_m1[i][m] = 0.;
+            TimeSci2wTref_m1[i][m] = 0.;
+            posLosX_cm[i][m] = 0.;
+            timeLosV[i][m] = 0.;
+        }
     }
 
     // --- read hit from Sci2 data --- //
-    if (fHitSci2 && fHitSci2->GetEntriesFast())
+    if (fHitSci2 && fHitSci2->GetEntriesFast() > 0)
     {
         Int_t numDet = 1;
-
         nHits = fHitSci2->GetEntriesFast();
         for (Int_t ihit = 0; ihit < nHits; ihit++)
         {
             R3BSci2HitData* hittcal = (R3BSci2HitData*)fHitSci2->At(ihit);
             numDet = hittcal->GetSciId();
-            if (multSci2[numDet - 1] == 0)
+            if (numDet > fNumDet)
             {
-                PosSci2_m1[numDet - 1] = hittcal->GetX();
-                TimeSci2_m1[numDet - 1] = hittcal->GetTime();
-                multSci2[numDet - 1]++;
+                R3BLOG(WARNING, "Sci2 detector id:" << numDet << " is out of range!");
+                continue;
             }
+            if (multSci2[numDet - 1] >= MAXMULT)
+                continue;
+            PosSci2_m1[numDet - 1][multSci2[numDet - 1]] = hittcal->GetX();
+            TimeSci2_m1[numDet - 1][multSci2[numDet - 1]] = hittcal->GetTime();
+            TimeSci2wTref_m1[numDet - 1][multSci2[numDet - 1]] = hittcal->GetTimeWithTref();
+            multSci2[numDet - 1]++;
         } // --- end of loop over hit data --- //
     }
 
     // --- read hit from LOS data --- //
-    if (fHitLos && fHitLos->GetEntriesFast())
+    if (fHitLos && fHitLos->GetEntriesFast() > 0)
     {
         Int_t numDet = 1;
 
@@ -198,28 +210,47 @@ void R3BIncomingBeta::Exec(Option_t* option)
             R3BLosHitData* hittcal = (R3BLosHitData*)fHitLos->At(ihit);
             numDet = hittcal->GetDetector();
 
-            if (multLos[numDet - 1] == 0)
-            {
-                timeLosV[numDet - 1] = hittcal->GetTime();
-                posLosX_cm[numDet - 1] = hittcal->GetX_cm();
-                multLos[numDet - 1]++;
-            }
+            if (multLos[numDet - 1] >= MAXMULT)
+                break;
+            timeLosV[numDet - 1][multLos[numDet - 1]] = hittcal->GetTime();
+            posLosX_cm[numDet - 1][multLos[numDet - 1]] = hittcal->GetX_cm();
+            multLos[numDet - 1]++;
         } // --- end of loop over hit data --- //
     }
 
+    Int_t num_tof_candidates = 0;
     for (int i = 0; i < fNumDet; i++)
     {
-        if (multLos[i] >= 1 && multSci2[i] >= 1)
+        for (Int_t i_L = 0; i_L < multLos[i]; i_L++)
         {
-            ToFraw_m1 = fTimeStitch->GetTime(timeLosV[i] - TimeSci2_m1[i], "vftx", "vftx");
-
-            Velo_m1 =
-                1. / (fTof2InvV_p0->GetAt(i) + fTof2InvV_p1->GetAt(i) * (fToFoffset->GetAt(i) + ToFraw_m1)); // [m/ns]
-            Beta_m1 = Velo_m1 / 0.299792458;
-
-            if (Beta_m1 < fBeta_max && Beta_m1 > fBeta_min)
+            // if (multLos[i] >= 1 && multSci2[i] >= 1)
+            for (Int_t i_2 = 0; i_2 < multSci2[i]; i_2++)
             {
-                AddData(1, 2, 0., 0., Beta_m1, 0., PosSci2_m1[i], posLosX_cm[i]);
+                if (num_tof_candidates > 0)
+                    break;
+                ToFraw_m1 = fTimeStitch->GetTime(timeLosV[i][i_L] - TimeSci2_m1[i][i_2], "vftx", "vftx");
+                ToFrawwTref_m1 = fTimeStitch->GetTime(fHeader->GetTStart() - TimeSci2wTref_m1[i][i_2], "vftx", "vftx");
+
+                Velo_m1 = 1. / (fTof2InvV_p0->GetAt(i) +
+                                fTof2InvV_p1->GetAt(i) * (fToFoffset->GetAt(i) + ToFraw_m1)); // [m/ns]
+                VelowTref_m1 = 1. / (fTof2InvV_p0->GetAt(i) +
+                                     fTof2InvV_p1->GetAt(i) * (fToFoffset->GetAt(i) + ToFrawwTref_m1)); // [m/ns]
+
+                if (fUseTref)
+                    Beta_m1 = VelowTref_m1 / 0.299792458;
+                else
+                    Beta_m1 = Velo_m1 / 0.299792458;
+
+                if (fUseTref)
+                    ToFraw_m1 = ToFrawwTref_m1;
+                // Select good ToF hit with gating beta
+                // At this moment, the multiplicity of FrsData (num_tof_candidates)
+                // is restricted to be one. The beta conditions should be optimised.
+                if (Beta_m1 < fBeta_max && Beta_m1 > fBeta_min)
+                {
+                    AddData(1, 2, 0., 0., Beta_m1, 0., PosSci2_m1[i][i_2], posLosX_cm[i][i_L], ToFraw_m1);
+                    num_tof_candidates++;
+                }
             }
         }
     }
@@ -248,12 +279,13 @@ R3BFrsData* R3BIncomingBeta::AddData(Int_t StaId,
                                      Double_t beta,
                                      Double_t brho,
                                      Double_t xs2,
-                                     Double_t xc)
+                                     Double_t xc,
+                                     Double_t tof)
 {
     // It fills the R3BFrsData
     TClonesArray& clref = *fFrsDataCA;
     Int_t size = clref.GetEntriesFast();
-    return new (clref[size]) R3BFrsData(StaId, StoId, z, aq, beta, brho, xs2, xc);
+    return new (clref[size]) R3BFrsData(StaId, StoId, z, aq, beta, brho, xs2, xc, tof);
 }
 
 ClassImp(R3BIncomingBeta);

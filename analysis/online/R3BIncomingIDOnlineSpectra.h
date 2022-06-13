@@ -87,22 +87,42 @@ class R3BIncomingIDOnlineSpectra : public FairTask
      */
     virtual void Reset_Histo();
 
+    /**
+     * Method for setting the fTpat
+     */
+    void SetTpat(Int_t tpat) { fTpat = tpat; }
+
     // Setting parameters
-    void SetStartPlaId(Int_t id){fStaId = id;};
-    void SetRangeZ(Double_t min, Double_t max){fMin_Z = min; fMax_Z = max;};
-    void SetRangeAq(Double_t min, Double_t max){fMin_Aq = min; fMax_Aq = max;};
-    void SetIsoGate(Double_t minz, Double_t maxz, Double_t minaq, Double_t maxaq){
-      fMin_Z_gate = minz; fMax_Z_gate = maxz; fMin_Aq_gate = minaq; fMax_Aq_gate = maxaq;
+    void SetStartPlaId(Int_t id) { fStaId = id; };
+    void SetRangeZ(Double_t min, Double_t max)
+    {
+        fMin_Z = min;
+        fMax_Z = max;
     }
 
- private:
+    void SetRangeAq(Double_t min, Double_t max)
+    {
+        fMin_Aq = min;
+        fMax_Aq = max;
+    }
+
+    void SetIsoGate(Double_t minz, Double_t maxz, Double_t minaq, Double_t maxaq)
+    {
+        fMin_Z_gate = minz;
+        fMax_Z_gate = maxz;
+        fMin_Aq_gate = minaq;
+        fMax_Aq_gate = maxaq;
+    }
+
+  private:
     TClonesArray* fHitFrs; /**< Array with hit items. */
+    TClonesArray* fHitLos; /**< Array with hit items. */
     TClonesArray* fMwpc0HitDataCA;
     TClonesArray* fMwpc1HitDataCA;
 
     // Start Plastic ID
     Int_t fStaId;
-    
+
     // Ranges for the histograms;
     Double_t fMin_Z, fMax_Z, fMin_Aq, fMax_Aq;
     Double_t fMin_Z_gate, fMax_Z_gate, fMin_Aq_gate, fMax_Aq_gate;
@@ -114,17 +134,22 @@ class R3BIncomingIDOnlineSpectra : public FairTask
     // check for trigger should be done globablly (somewhere else)
     R3BEventHeader* header; /**< Event header.      */
     Int_t fNEvents;         /**< Event counter.     */
+    Int_t fTpat;
 
     // Canvas
     TCanvas* cBeta;
+    TCanvas* cTof;
     TCanvas* cBrho;
     TCanvas* cAqvsq;
     TCanvas* cXs2vsBeta;
     TCanvas* cAoQvsPosS2;
     TCanvas* cIsoGated;
+    TCanvas* cLosE_Tof;
+    TCanvas* cLosE_Tof2;
 
     // Histograms for Hit data
     TH1F* fh1_beta;
+    TH1F* fh1_tof;
     TH1F* fh1_brho;
     TH2F* fh2_Aqvsq;
     TH2F* fh2_Xs2vsbeta;
@@ -133,6 +158,10 @@ class R3BIncomingIDOnlineSpectra : public FairTask
     TH2F* fh2_IsoGated_Z_xc;
     TH2F* fh2_IsoGated_xs2_xc;
     TH2F* fh2_IsoGated_xc_anglec;
+    TH2F* fh2_LosE_Tof;
+    TH1F* fh1_LosE_withTof;
+    TH1F* fh1_LosE_withoutTof;
+
   public:
     ClassDef(R3BIncomingIDOnlineSpectra, 1)
 };

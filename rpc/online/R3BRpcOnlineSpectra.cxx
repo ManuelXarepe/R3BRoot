@@ -313,6 +313,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
     stripRightTimeCorr = new TH2F(
         "stripRightTimeCorr", "Strip Vs Time : Right", 41, 0.5, 41.5, fRpcTimeBins, fLeftRpcTimeLim, fRightRpcTimeLim);
 
+
     /* ----- Cal Histograms ----- */
     stripCalTimeCorr = new TH2F("stripCalTimeCorr", "Strip: Time Left Vs Time Right", 800, -680, -580, 800, -800, -600);
     stripCalToTCorr = new TH2F("stripCalToTCorr", "Strip: ToT Left Vs ToT Right", 400, -100, -350, 400, -100, 350);
@@ -457,7 +458,8 @@ InitStatus R3BRpcOnlineSpectra::Init()
         rightStripCanvasCoarse->cd(i + 1);
         stripCoarseRightHisto[i]->Draw();
 
-        stripTofHisto[i]->GetXaxis()->SetTitle("ToF (ps)");
+
+        stripTofHisto[i]->GetXaxis()->SetTitle("ToF (ns)");
         stripTofHisto[i]->GetYaxis()->SetTitle("Counts");
         stripTofCanvas->cd(i + 1);
         stripTofHisto[i]->Draw();
@@ -833,14 +835,13 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
 
     auto nMappedHits = fMappedDataItems->GetEntriesFast();
 
-    if (fSpill == 1)
-        execBool = (fTPat >= fFirstTPat && fTPat <= fFirstTPat);
+     if(fSpill==1)
+      execBool = (fTPat >=fFirstTPat && fTPat <= fLastTPat);
 
-    if (fSpill == 0)
-        execBool = !(fTPat >= fFirstTPat && fTPat <= fFirstTPat);
+     if(fSpill==0)
+      execBool = !(fTPat >=fFirstTPat && fTPat <= fLastTPat);
 
-    if (execBool)
-    {
+     if(execBool){
 
         /* ------------------- Map EventLoop ------------------*/
         for (Int_t ihit = 0; ihit < nMappedHits; ihit++)
@@ -920,7 +921,6 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
 
                 if (side == 0)
                 {
-
                     stripLeftTotCorr->Fill(hit->GetChannelId(), hit->GetTot());
                     stripLeftTimeCorr->Fill(hit->GetChannelId(), hit->GetTime());
                 }
@@ -937,14 +937,12 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
 
                 if (side == 0)
                 {
-
                     pmtPreCalTimeHistoTop[hit->GetChannelId() - 1]->Fill(hit->GetTime());
                     pmtPreCalTotHistoTop[hit->GetChannelId() - 1]->Fill(hit->GetTot());
                 }
 
                 if (side == 1)
                 {
-
                     pmtPreCalTimeHistoBottom[hit->GetChannelId() - 1]->Fill(hit->GetTime());
                     pmtPreCalTotHistoBottom[hit->GetChannelId() - 1]->Fill(hit->GetTot());
                 }

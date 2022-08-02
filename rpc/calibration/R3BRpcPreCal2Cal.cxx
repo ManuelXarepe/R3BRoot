@@ -107,52 +107,52 @@ void R3BRpcPreCal2Cal::Exec(Option_t* option)
     double tot_R_B;
     double tot_L_T;
     Int_t nHits = fPreCalDataCA->GetEntries();
+    int mask[nHits] = {0};
     for (Int_t i = 0; i < nHits; i++)
     {
-        auto map1 = dynamic_cast<R3BRpcPreCalData*>(fPreCalDataCA->At(i));
+     if(mask[i]==1){continue;}
+     auto map1 = (R3BRpcPreCalData*)(fPreCalDataCA->At(i));
 
-        UInt_t iDetector = map1->GetDetId();
-        if (iDetector == 2)
-        {
-            continue;
-        }
-        UInt_t inum = (iDetector * 41 + map1->GetChannelId()) * 2 + map1->GetSide() - 2;
-        for (Int_t ii = i + 1; ii < nHits; ii++)
-        {
-            auto nxt_chn = dynamic_cast<R3BRpcPreCalData*>(fPreCalDataCA->At(ii));
-            if (map1->GetChannelId() == nxt_chn->GetChannelId() && map1->GetSide() != nxt_chn->GetSide())
-            {
-                UInt_t nxt_inum = (iDetector * 41 + nxt_chn->GetChannelId()) * 2 + nxt_chn->GetSide() - 2;
-
-                if (map1->GetSide() == 1)
-                {
-                    tot_R_B = map1->GetTot() - fParCont->GetAt(inum);
-                    tot_L_T = nxt_chn->GetTot() - fParCont->GetAt(nxt_inum);
-
-                    time_R_B = map1->GetTime();
-                    time_L_T = nxt_chn->GetTime();
-                }
-
-                else
-                {
-                    tot_L_T = map1->GetTot() - fParCont->GetAt(inum);
-                    tot_R_B = nxt_chn->GetTot() - fParCont->GetAt(nxt_inum);
-
-                    time_L_T = map1->GetTime();
-                    time_R_B = nxt_chn->GetTime();
-                }
-
-                // It fills the R3BRpcCalData
-                TClonesArray& clref = *fRpcCalDataCA;
-                Int_t size = clref.GetEntriesFast();
-                // R3BRpcCalData(UShort_t channelId, double TimeRight, double TimeLeft, double TotRight, double
-                // TotLeft);
-                new (clref[size])
-                    R3BRpcCalData(iDetector, nxt_chn->GetChannelId(), time_R_B, time_L_T, tot_R_B, tot_L_T);
-
-                break;
-            }
-        }
+     UInt_t iDetector = map1->GetDetId();
+     if(iDetector == 2){continue;}
+     UInt_t inum = (iDetector * 41 + map1->GetChannelId())*2 + map1->GetSide() -2 ;
+     for (Int_t t = i+1; t < nHits; t++)
+     {
+       if(mask[t]==1){continue;}
+       auto nxt_chn = (R3BRpcPreCalData*)fPreCalDataCA->At(t);
+       if(map1->GetChannelId() == nxt_chn->GetChannelId()
+        && map1->GetSide() != nxt_chn->GetSide() && map1->GetDetId() == nxt_chn->GetDetId()){
+           UInt_t nxt_inum = (iDetector * 41 + nxt_chn->GetChannelId())*2 + nxt_chn->GetSide() -2 ;
+     
+           if (map1->GetSide() == 1)
+           {       
+              tot_R_B = map1->GetTot() - fParCont->GetAt(inum) + 5;
+              tot_L_T = nxt_chn->GetTot() - fParCont->GetAt(nxt_inum) + 5;
+       
+              time_R_B = map1->GetTime();
+              time_L_T = nxt_chn->GetTime();
+     
+           }
+     
+           else
+           {
+              tot_L_T = map1->GetTot() - fParCont->GetAt(inum) + 5;
+              tot_R_B = nxt_chn->GetTot() - fParCont->GetAt(nxt_inum) + 5;
+     
+              time_L_T = map1->GetTime();
+              time_R_B = nxt_chn->GetTime();
+           }
+     
+           // It fills the R3BRpcCalData
+           TClonesArray& clref = *fRpcCalDataCA;
+           Int_t size = clref.GetEntriesFast();
+           //R3BRpcCalData(UShort_t channelId, double TimeRight, double TimeLeft, double TotRight, double TotLeft);
+           new (clref[size]) R3BRpcCalData(iDetector, nxt_chn->GetChannelId(), time_R_B, time_L_T, tot_R_B, tot_L_T);
+           mask[i]=1;
+       mask[t]=1; 
+           break;
+      } 
+     }
     }
     return;
 }

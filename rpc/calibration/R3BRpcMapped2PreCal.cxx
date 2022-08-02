@@ -103,7 +103,7 @@ InitStatus R3BRpcMapped2PreCal::Init()
         lines++ ;
         if (chn_id.find("NC") != string::npos || chn_id.find("NB") != string::npos ){continue;}
         int chn = stoi(chn_id);
-        int fpga = floor(lines/33.);
+        int fpga = (lines-1)/32.;
         lut[chn -1][side_lut].push_back(fpga);
     }
     in.close();

@@ -329,7 +329,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
      stripCalToTCorr = new TH2F("stripCalToTCorr","Strip: ToT Left Vs ToT Right",400,-100,-350,400,-100,350);
 
      /* ------------- HIT Histograms ------------ */
-     stripPosHitCorr = new TH2F("stripPosHitCorr","Strip Vs Position",150,0,1500,41,0.5,41.5);
+     stripPosHitCorr = new TH2F("stripPosHitCorr","Strip Vs Position",150,-500,2000,41,0.5,41.5);
      totalChargeHist = new TH1F("totalChargeHist","Charge",1000,-100,400);
      meanChargeCorr  = new TH2F("meanChargeCorr","Heat Map : Mean Charge",50,0,1500,41,0.5,41.5);
 
@@ -476,7 +476,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
         stripCoarseRightHisto[i]->Draw();
 
 
-        stripTofHisto[i]->GetXaxis()->SetTitle("ToF (ps)");
+        stripTofHisto[i]->GetXaxis()->SetTitle("ToF (ns)");
         stripTofHisto[i]->GetYaxis()->SetTitle("Counts");
         stripTofCanvas->cd(i+1);
         stripTofHisto[i]->Draw();
@@ -1021,7 +1021,6 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
     Int_t StripCounter = 0;
 
     Bool_t goodBar = kFALSE;
-
     for( Int_t ihit = 0; ihit < nStripHits; ihit++) {
 
      R3BRpcHitData* hit = (R3BRpcHitData*)fHitDataItems->At(ihit);
@@ -1030,7 +1029,6 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
       channelId =  hit->GetChannelId();
       pos       =  hit->GetPos();
       charge    =  hit->GetCharge();
-
 
      if(detId ==1 && channelId == 2){
 

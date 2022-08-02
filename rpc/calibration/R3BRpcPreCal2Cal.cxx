@@ -113,18 +113,21 @@ void R3BRpcPreCal2Cal::Exec(Option_t* option)
     double tot_R_B;
     double tot_L_T;
     Int_t nHits = fPreCalDataCA->GetEntries();
+    int mask[nHits] = {0};
     for (Int_t i = 0; i < nHits; i++)
     {
+     if(mask[i]==1){continue;}
      auto map1 = (R3BRpcPreCalData*)(fPreCalDataCA->At(i));
 
      UInt_t iDetector = map1->GetDetId();
      if(iDetector == 2){continue;}
      UInt_t inum = (iDetector * 41 + map1->GetChannelId())*2 + map1->GetSide() -2 ;
-     for (Int_t ii = i+1; ii < nHits; ii++)
+     for (Int_t t = i+1; t < nHits; t++)
      {
-       auto nxt_chn = (R3BRpcPreCalData*)fPreCalDataCA->At(ii);
+       if(mask[t]==1){continue;}
+       auto nxt_chn = (R3BRpcPreCalData*)fPreCalDataCA->At(t);
        if(map1->GetChannelId() == nxt_chn->GetChannelId()
-        && map1->GetSide() != nxt_chn->GetSide() ){
+        && map1->GetSide() != nxt_chn->GetSide() && map1->GetDetId() == nxt_chn->GetDetId()){
            UInt_t nxt_inum = (iDetector * 41 + nxt_chn->GetChannelId())*2 + nxt_chn->GetSide() -2 ;
      
            if (map1->GetSide() == 1)
@@ -151,7 +154,8 @@ void R3BRpcPreCal2Cal::Exec(Option_t* option)
            Int_t size = clref.GetEntriesFast();
            //R3BRpcCalData(UShort_t channelId, double TimeRight, double TimeLeft, double TotRight, double TotLeft);
            new (clref[size]) R3BRpcCalData(iDetector, nxt_chn->GetChannelId(), time_R_B, time_L_T, tot_R_B, tot_L_T);
-     
+           mask[i]=1;
+	   mask[t]=1; 
            break;
       } 
      }

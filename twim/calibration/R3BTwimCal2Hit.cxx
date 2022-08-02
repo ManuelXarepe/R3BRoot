@@ -17,8 +17,11 @@
 // -------------------------------------------------------------
 
 // ROOT headers
+#include "TCanvas.h"
 #include "TClonesArray.h"
 #include "TDecompSVD.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include "TMath.h"
 #include "TMatrixD.h"
 #include "TRandom.h"
@@ -32,6 +35,7 @@
 #include "FairRuntimeDb.h"
 
 // Twim headers
+#include "R3BEventHeader.h"
 #include "R3BLogger.h"
 #include "R3BTwimCal2Hit.h"
 #include "R3BTwimCalData.h"
@@ -64,6 +68,8 @@ R3BTwimCal2Hit::R3BTwimCal2Hit(const char* name, Int_t iVerbose)
     , fHitItemsTofW(NULL)
     , fOnline(kFALSE)
     , fExpId(455)
+    , fTpat(-1)
+    , fDebug(false)
 {
 }
 
@@ -203,6 +209,10 @@ InitStatus R3BTwimCal2Hit::Init()
         return kFATAL;
     }
 
+    header = (R3BEventHeader*)rootManager->GetObject("EventHeader.");
+    if (!header)
+        header = (R3BEventHeader*)rootManager->GetObject("R3BEventHeader");
+
     // INPUT DATA
     // get access to cal data of the Twim
     fTwimCalDataCA = (TClonesArray*)rootManager->GetObject("TwimCalData");
@@ -224,6 +234,72 @@ InitStatus R3BTwimCal2Hit::Init()
     rootManager->Register("TwimHitData", "TWIM Hit", fTwimHitDataCA, !fOnline);
     fTwimHitDataCA->Clear();
 
+    if (fDebug)
+    {
+        dx_canvas = new TCanvas*[fNumSec];
+        dx_all_canvas = new TCanvas*[fNumSec];
+        dx_vs_pos_canvas = new TCanvas*[fNumSec];
+        char Name1c[255];
+        char Name2c[255];
+        char Name3c[255];
+
+        for (Int_t i = 0; i < fNumSec; i++)
+        {
+            sprintf(Name1c, "dx_canvas_sec_%d", i + 1);
+            dx_canvas[i] = new TCanvas(Name1c, Name1c, 10, 10, 800, 700);
+            dx_canvas[i]->Divide(4, 4);
+
+            sprintf(Name2c, "dx_vs_pos_canvas_sec_%d", i + 1);
+            dx_vs_pos_canvas[i] = new TCanvas(Name2c, Name2c, 10, 10, 800, 700);
+            dx_vs_pos_canvas[i]->Divide(4, 4);
+
+            sprintf(Name3c, "dx_all_canvas_sec_%d", i + 1);
+            dx_all_canvas[i] = new TCanvas(Name3c, Name3c, 10, 10, 800, 700);
+        }
+
+        char Name1[255];
+        char Name2[255];
+        char Name1_legend[255];
+        char Name2_title[255];
+        dx = new TH1F*[fNumSec * fNumAnodes];
+        dx_vs_pos = new TH2F*[fNumSec * fNumAnodes];
+        for (Int_t s = 0; s < fNumSec; s++)
+        {
+            for (Int_t i = 0; i < fNumAnodes; i++)
+            {
+                sprintf(Name1, "dx_sec_%d_anode_%d", s + 1, i + 1);
+                sprintf(Name1_legend, "Anode %d", i + 1);
+                sprintf(Name2, "dx_vs_pos_sec_%d_anode_%d", s + 1, i + 1);
+                sprintf(Name2_title, "Section %d, Anode %d", s + 1, i + 1);
+                dx[s * fNumAnodes + i] = new TH1F(Name1, Name1_legend, 1000, -1, 1);
+                dx[s * fNumAnodes + i]->GetXaxis()->SetTitle("#deltax [mm]");
+                dx[s * fNumAnodes + i]->GetYaxis()->SetTitle("Counts");
+                if (s < 2)
+                    dx_vs_pos[s * fNumAnodes + i] = new TH2F(Name2, Name2_title, 1000, 0, 100, 1000, -1, 1);
+                else
+                    dx_vs_pos[s * fNumAnodes + i] = new TH2F(Name2, Name2_title, 1000, -100, 0, 1000, -1, 1);
+                dx_vs_pos[s * fNumAnodes + i]->GetXaxis()->SetTitle("X [mm]");
+                dx_vs_pos[s * fNumAnodes + i]->GetYaxis()->SetTitle("#deltax [mm]");
+                dx_canvas[s]->cd(i + 1);
+                dx[s * fNumAnodes + i]->Draw("");
+                dx_vs_pos_canvas[s]->cd(i + 1);
+                dx_vs_pos[s * fNumAnodes + i]->Draw("ZCOL");
+            }
+        }
+
+        for (Int_t s = 0; s < fNumSec; s++)
+        {
+            dx_all_canvas[s]->cd();
+            dx[s * fNumAnodes + 3]->SetLineColor(46);
+            dx[s * fNumAnodes + 3]->Draw("");
+            for (Int_t i = 4; i < 13; i++)
+            {
+                dx[s * fNumAnodes + i]->SetLineColor(i - 3);
+                dx[s * fNumAnodes + i]->Draw("SAME");
+            }
+        }
+    }
+
     SetParameter();
     return kSUCCESS;
 }
@@ -239,6 +315,8 @@ InitStatus R3BTwimCal2Hit::ReInit()
 // -----   Public method Execution   --------------------------------------------
 void R3BTwimCal2Hit::Exec(Option_t* option)
 {
+    if ((fTpat >= 0) && (header) && ((header->GetTpat() & fTpat) != fTpat))
+        return;
     // At the moment we will use the expid to select the reconstruction
     // this should be changed in the future because expid is not necessary
     if (fExpId == 444 || fExpId == 467 || fExpId == 509 || fExpId == 522)
@@ -352,20 +430,19 @@ void R3BTwimCal2Hit::S4551()
         Int_t secId = 0, anodeId = 0;
         Double_t energyperanode[fNumSec][fNumAnodes];
         Double_t dt[fNumSec][fNumAnodes];
-        Double_t good_dt[fNumSec][fNumAnodes];
+        Double_t good_dt[fNumAnodes];
         Int_t nbdet = 0;
 
         for (Int_t j = 0; j < fNumAnodes; j++)
         {
+            good_dt[j] = 0;
             for (Int_t i = 0; i < fNumSec; i++)
             {
                 energyperanode[i][j] = 0.;
-                good_dt[i][j] = 0.;
                 dt[i][j] = -1000.;
             }
         }
 
-        // std::cout<<"Event " <<std::endl;
         for (Int_t i = 0; i < nHitTwim; i++)
         {
             CalDat[i] = (R3BTwimCalData*)(fTwimCalDataCA->At(i));
@@ -375,26 +452,28 @@ void R3BTwimCal2Hit::S4551()
             {
                 energyperanode[secId][anodeId] = CalDat[i]->GetEnergy();
                 dt[secId][anodeId] = CalDat[i]->GetDTime();
-                // std::cout<< secId <<" "<<anodeId <<" "<< CalDat[i]->GetEnergy() <<std::endl;
             }
         }
 
         // calculate truncated dE from 16 anodes, Twim-MUSIC
         for (Int_t i = 0; i < fNumSec; i++)
         {
-            Double_t nba = 0, theta = -5000., Esum = 0.;
+            Double_t nba = 0, offset = 0., theta = -5000., Esum = 0.;
             fNumAnodesAngleFit = 0;
             Double_t dt_ref = 0.;
+            Double_t Xfit[fNumAnodes];
+
             for (Int_t j = 0; j < fNumAnodes; j++)
             {
-                if (j > 2 && j < 13 &&
-                    energyperanode[i][j] >
-                        0) //&& energyperanode[i][j] < fMaxEnergyperanode && StatusAnodes[i][j] == 1 )
+                Xfit[j] = 0;
+                fIndex[fNumAnodesAngleFit] = j;
+                if (j > 2 && j < 13 && energyperanode[i][j] > 0 && energyperanode[i][j] < fMaxEnergyperanode &&
+                    StatusAnodes[i][j] == 1 && dt[i][j] > -100. && dt[i][j] < 100.)
                 {
+                    good_dt[fNumAnodesAngleFit] = dt[i][j];
                     Esum += energyperanode[i][j];
                     if (dt[i][j] > -1000.)
                     {
-                        good_dt[i][j] = dt[i][j];
                         if (j == 7)
                             dt_ref = dt[i][j];
                     }
@@ -403,45 +482,44 @@ void R3BTwimCal2Hit::S4551()
                     nba++;
                 }
             } // loop fNumAnodes
-
             if (nba > 3 && (Esum / nba) > 0.)
             {
-                theta = 0.;
-                // if (fNumAnodesAngleFit > 8)
-                //{
-                // fPosZ.Use(fNumAnodesAngleFit, fPosAnodes);
-                // TMatrixD A(fNumAnodesAngleFit, 2);
-                // TMatrixDColumn(A, 0) = 1.0;
-                // TMatrixDColumn(A, 1) = fPosZ;
-                // TDecompSVD svd(A);
-                // Bool_t ok;
-                // TVectorD dt_r;
-                // dt_r.Use(fNumAnodesAngleFit, good_dt);
-                // TVectorD c_svd_r = svd.Solve(dt_r, ok);
-                // theta = c_svd_r[1];
-                //}
+                if (fNumAnodesAngleFit > 8)
+                {
+                    fPosZ.Use(fNumAnodesAngleFit, fPosAnodes);
+                    TMatrixD A(fNumAnodesAngleFit, 2);
+                    TMatrixDColumn(A, 0) = 1.0;
+                    TMatrixDColumn(A, 1) = fPosZ;
+                    TDecompSVD svd(A);
+                    Bool_t ok;
+                    TVectorD dt_r;
+                    dt_r.Use(fNumAnodesAngleFit, good_dt);
+                    TVectorD c_svd_r = svd.Solve(dt_r, ok);
+                    offset = c_svd_r[0];
+                    theta = c_svd_r[1];
+                    for (Int_t y = 0; y < fNumAnodesAngleFit; y++)
+                    {
+                        Xfit[y] = c_svd_r[0] + c_svd_r[1] * fPosAnodes[y];
+                        if (fDebug)
+                        {
+                            dx[i * fNumAnodes + fIndex[y]]->Fill(Xfit[y] - good_dt[y]);
+                            dx_vs_pos[i * fNumAnodes + fIndex[y]]->Fill(Xfit[y], Xfit[y] - good_dt[y]);
+                        }
+                    }
+                }
                 if (CalZTofParams)
                 {
                     Double_t Esum_mean = Esum / nba;
-                    // std::cout << "z_raw = " << fZ0[i] + fZ1[i] * TMath::Sqrt(Esum_mean) + fZ2[i] * Esum_mean <<
-                    // std::endl;
                     Esum_mean = fEmean_tof[i] * Esum_mean /
                                 (CalZTofParams->GetAt(i * fNumParamsTof) +
                                  CalZTofParams->GetAt(i * fNumParamsTof + 1) * tof[i] +
                                  CalZTofParams->GetAt(i * fNumParamsTof + 2) * tof[i] * tof[i]);
-                    // std::cout << "i = " << i << ", fEmean_tof[i] = " << fEmean_tof[i] << ", p0 =" <<
-                    // CalZTofParams->GetAt(i * fNumParamsTof) << ", p1 = " << CalZTofParams->GetAt(i * fNumParamsTof +
-                    // 1) << ", p2 = " << CalZTofParams->GetAt(i * fNumParamsTof + 2) << std::endl;
                     TSpline3* spl = fCal_Par->GetSpline(i + 1);
-                    Esum_mean = fEmean_dt[i] * Esum_mean / spl->Eval(dt_ref); // good_dt[7]
-                    // std::cout << "Z_dt = " << fZ0[i] + fZ1[i] * TMath::Sqrt(Esum_mean) + fZ2[i] * Esum_mean <<
-                    // std::endl;
+                    Esum_mean = fEmean_dt[i] * Esum_mean / spl->Eval(dt_ref);
                     Double_t zhit = fZ0[i] + fZ1[i] * TMath::Sqrt(Esum_mean) + fZ2[i] * Esum_mean +
                                     fZ3[i] * TMath::Power(Esum_mean, 3. / 2.) + fZ4[i] * TMath::Power(Esum_mean, 2.);
-                    // std::cout << "i = " << i << ", fZ0[i] = " << fZ0[i] << ", fZ1[i] = " << fZ1[i] << ", fZ2[i] = "
-                    // << fZ2[i] << ", fZ3[i] = " << fZ3[i] << std::endl;
                     if (zhit > 0)
-                        AddHitData(i + 1, theta, zhit, dt_ref);
+                        AddHitData(i + 1, theta, zhit, dt_ref, offset, Esum_mean);
                 }
                 else
                 {
@@ -449,7 +527,7 @@ void R3BTwimCal2Hit::S4551()
                     Double_t zhit = fZ0[i] + fZ1[i] * TMath::Sqrt(Esum_mean) + fZ2[i] * Esum_mean +
                                     fZ3[i] * TMath::Power(Esum_mean, 3. / 2.) + fZ4[i] * TMath::Power(Esum_mean, 2.);
                     if (zhit > 0)
-                        AddHitData(i + 1, theta, zhit, dt_ref);
+                        AddHitData(i + 1, theta, zhit, dt_ref, offset, Esum_mean);
                 }
             } // loop nba>8
         }     // loop NumSec
@@ -458,6 +536,7 @@ void R3BTwimCal2Hit::S4551()
         if (HitTofW)
             delete[] HitTofW;
     } // if nHitTofW == 2
+
 #endif
     return;
 }
@@ -542,7 +621,7 @@ void R3BTwimCal2Hit::S455()
     // calculate truncated dE from 16 anodes, Twim-MUSIC
     for (Int_t i = 0; i < fNumSec; i++)
     {
-        Double_t nba = 0, theta = -5000., Esum = 0.;
+        Double_t nba = 0, offset = 0., theta = -5000., Esum = 0.;
         fNumAnodesAngleFit = 0;
         for (Int_t j = 0; j < fNumAnodes; j++)
         {
@@ -592,6 +671,7 @@ void R3BTwimCal2Hit::S455()
                 TVectorD dt_r;
                 dt_r.Use(fNumAnodesAngleFit, good_dt);
                 TVectorD c_svd_r = svd.Solve(dt_r, ok);
+                offset = c_svd_r[0];
                 theta = c_svd_r[1];
             }
             if (CalZTofParams)
@@ -609,7 +689,7 @@ void R3BTwimCal2Hit::S455()
                 Double_t zhit = fZ0[i] + fZ1[i] * TMath::Sqrt(Esum_mean) + fZ2[i] * Esum_mean;
                 // if (zhit > 0 && theta > -5000.)
                 if (zhit > 0)
-                    AddHitData(i + 1, theta, zhit, good_dt[7], Esum_mean);
+                    AddHitData(i + 1, theta, zhit, good_dt[7], offset, Esum_mean);
             }
             else
             {
@@ -617,7 +697,7 @@ void R3BTwimCal2Hit::S455()
                 Double_t zhit = fZ0[i] + fZ1[i] * TMath::Sqrt(Esum_mean) + fZ2[i] * Esum_mean;
                 // if (zhit > 0 && theta > -5000.)
                 if (zhit > 0)
-                    AddHitData(i + 1, theta, zhit, good_dt[7], Esum_mean);
+                    AddHitData(i + 1, theta, zhit, good_dt[7], offset, Esum_mean);
             }
         }
         // i = i + 2;
@@ -668,7 +748,7 @@ void R3BTwimCal2Hit::S467()
     // calculate truncated dE from 16 anodes, Twim-MUSIC
     for (Int_t i = 0; i < fNumSec; i++)
     {
-        Double_t nba = 0, theta = -5000., Esum = 0.;
+        Double_t nba = 0, offset = 0., theta = -5000., Esum = 0.;
         Double_t zhit = 0;
         fNumAnodesAngleFit = 0;
         for (Int_t j = 0; j < fNumAnodes; j++)
@@ -696,12 +776,13 @@ void R3BTwimCal2Hit::S467()
                 TVectorD dt_r;
                 dt_r.Use(fNumAnodesAngleFit, good_dt);
                 TVectorD c_svd_r = svd.Solve(dt_r, ok);
+                offset = c_svd_r[0];
                 theta = c_svd_r[1];
             }
             zhit =
                 fZ0[i] + fZ1[i] * TMath::Sqrt(Esum / nba) + fZ2[i] * TMath::Sqrt(Esum / nba) * TMath::Sqrt(Esum / nba);
             if (zhit > 0 && theta > -5000.)
-                AddHitData(i + 1, theta, zhit, good_dt[7], Esum / nba);
+                AddHitData(i + 1, theta, zhit, good_dt[7], offset, Esum / nba);
         }
     }
 
@@ -719,25 +800,29 @@ void R3BTwimCal2Hit::Reset()
 }
 
 // -----   Private method AddHitData  --------------------------------------------
-R3BTwimHitData* R3BTwimCal2Hit::AddHitData(UShort_t secid, Double_t theta, Double_t charge_z, Double_t xpos)
-{
-    // It fills the R3BTwimHitData
-    TClonesArray& clref = *fTwimHitDataCA;
-    Int_t size = clref.GetEntriesFast();
-    return new (clref[size]) R3BTwimHitData(secid, theta, charge_z, xpos);
-}
-
-// -----   For later analysis with reconstructed beta -----
 R3BTwimHitData* R3BTwimCal2Hit::AddHitData(UShort_t secid,
                                            Double_t theta,
                                            Double_t charge_z,
                                            Double_t xpos,
+                                           Double_t offset,
                                            Double_t ene_ave)
 {
     // It fills the R3BTwimHitData
     TClonesArray& clref = *fTwimHitDataCA;
     Int_t size = clref.GetEntriesFast();
-    return new (clref[size]) R3BTwimHitData(secid, theta, charge_z, xpos, ene_ave);
+    return new (clref[size]) R3BTwimHitData(secid, theta, charge_z, xpos, offset, ene_ave);
+}
+void R3BTwimCal2Hit::FinishTask()
+{
+    if (fDebug)
+    {
+        for (Int_t s = 0; s < fNumSec; s++)
+        {
+            dx_canvas[s]->Write();
+            dx_all_canvas[s]->Write();
+            dx_vs_pos_canvas[s]->Write();
+        }
+    }
 }
 
 ClassImp(R3BTwimCal2Hit);

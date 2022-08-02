@@ -50,8 +50,7 @@ R3BRpcMapped2PreCal::~R3BRpcMapped2PreCal()
 
 InitStatus R3BRpcMapped2PreCal::Init()
 {
-    LOG(info) << "R3BRpcMapped2PreCal::Init()";
-
+    LOG(INFO) << "R3BRpcMapped2PreCal::Init()";
     // INPUT DATA
     FairRootManager* rootManager = FairRootManager::Instance();
     if (!rootManager)
@@ -107,8 +106,8 @@ InitStatus R3BRpcMapped2PreCal::Init()
             continue;
         }
         int chn = stoi(chn_id);
-        int fpga = floor(lines / 33.);
-        lut[chn - 1][side_lut].push_back(fpga);
+        int fpga = (lines-1)/32.;
+        lut[chn -1][side_lut].push_back(fpga);
     }
     in.close();
 
@@ -201,13 +200,20 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
 
         auto map1 = dynamic_cast<R3BRpcMappedData*>(fMappedDataCA->At(i));
         UInt_t iDetector = map1->GetDetId();
-
-        if (iDetector == 2)
-        {
-            TClonesArray& clref = *fRpcPreCalDataCA;
-            Int_t size = clref.GetEntriesFast();
-            new (clref[size]) R3BRpcPreCalData(2, map1->GetChannelId(), Ref_vec[map1->GetChannelId() - 1].time, 0, 0);
+        UInt_t iFpga;
+    if(map1->GetChannelId() == 7 ){
+            iFpga = 5;
         }
+        else {
+            iFpga = map1->GetChannelId();   // now 1..4
+        }
+       
+        R3BTCalModulePar* par_Refs = fTCalPar->GetModuleParAt(iDetector+1,iFpga,0+1);
+    if(iDetector == 2){
+          TClonesArray& clref = *fRpcPreCalDataCA;
+      Int_t size = clref.GetEntriesFast();
+        new (clref[size]) R3BRpcPreCalData(2,map1->GetChannelId(),par_Refs->GetTimeVFTX(map1->GetFineTime()) , 0, 0);
+    }
 
         // loop over strip data
 
@@ -307,7 +313,6 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
                 // It fills the R3BRpcStripCalData
                 TClonesArray& clref = *fRpcPreCalDataCA;
                 Int_t size = clref.GetEntriesFast();
-                // cout << "strip  " << entry_lead.time << " " << strip << " " << side <<endl;
                 new (clref[size]) R3BRpcPreCalData(0, strip + 1, entry_lead.time, tot, side);
                 ++lead_i;
                 ++trail_i;
@@ -351,7 +356,7 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
             }
         }
     }
-    //      if(leading_pmt !=0 && leading_strip != 0){	 std::cout<<leading_pmt << " " <<  leading_strip << " " <<
+    //      if(leading_pmt !=0 && leading_strip != 0){   std::cout<<leading_pmt << " " <<  leading_strip << " " <<
     //      leading_strip - leading_pmt  <<  " " << fmod(leading_strip - leading_pmt + 1.5*c,c)-c/2 <<  std::endl;}
     return;
 }

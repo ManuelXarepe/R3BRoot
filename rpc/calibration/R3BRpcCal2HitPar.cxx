@@ -21,10 +21,12 @@
 #include "FairRootManager.h"
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
+#include "R3BEventHeader.h"
 
 #include "R3BRpcCal2HitPar.h"
 #include "R3BRpcCal2Hit.h"
 #include "R3BRpcCalData.h"
+#include "R3BEventHeader.h"
 
 #include "R3BRpcHitPar.h"
 
@@ -41,12 +43,14 @@ R3BRpcCal2HitPar::R3BRpcCal2HitPar(const char* name, Int_t iVerbose)
     , fHitPar(NULL)
     , fCalDataCA(NULL)
     , fNumChannels(64)
+    , fR3BEventHeader(NULL)
     , fDebugMode(false)
     , fRpcCalib(true)
 {
     for (Int_t i = 0; i < N_STRIP_NB; i++)
     {
         fhPos[i] = NULL;
+        fhPar[i] = NULL;
         fhTime[i] = NULL;
 
     }
@@ -91,6 +95,13 @@ InitStatus R3BRpcCal2HitPar::Init()
         return kFATAL;
     }
 
+    fR3BEventHeader = (R3BEventHeader*)rootManager->GetObject("EventHeader.");
+    if (!fR3BEventHeader)
+    {
+        LOG(ERROR) << "R3BRpcCal2HitPar::Init() EventHeader. not found";
+        return kFATAL;
+    }
+
     FairRuntimeDb* rtdb = FairRuntimeDb::instance();
     if (!rtdb)
     {
@@ -132,66 +143,72 @@ void R3BRpcCal2HitPar::Exec(Option_t* opt)
     double ichn_right= 0;
     double ichn_left= 0;
 
+    bool tpat2 = fR3BEventHeader->GetTpat() & 0x0fff;
     UInt_t inum=0 ;
 
-    for (Int_t i = 0; i < nHits; i++)
-    {
-     auto map1 = (R3BRpcCalData*)(fCalDataCA->At(i));
-     iDetector=map1->GetDetId();
-     inum = iDetector * 41 + map1->GetChannelId() -1;
+    if (tpat2>0){ 
+     for (Int_t i = 0; i < nHits; i++)
+     {
+      auto map1 = (R3BRpcCalData*)(fCalDataCA->At(i));
+      iDetector=map1->GetDetId();
+      inum = iDetector * 41 + map1->GetChannelId() -1;
 
-     if(iDetector==0){
-      if(map1->GetTotR_B() >=  charge_right){
-          charge_right=map1->GetTotR_B();
-          time_right=map1->GetTimeR_B();
-          ichn_right = map1->GetChannelId();
-      }
-      if(map1->GetTotL_T() >= charge_left){
+      if(iDetector==0){
+//       if(map1->GetTotR_B() >=  charge_right){
+           charge_right=map1->GetTotR_B();
+           time_right=map1->GetTimeR_B();
+           ichn_right = map1->GetChannelId();
+//       }
+//       if(map1->GetTotL_T() >= charge_left){
 
-          charge_left=map1->GetTotL_T();
-          time_left= map1->GetTimeL_T();      
-          ichn_left = map1->GetChannelId();
-      }
-      
-      if (NULL == fhPos[inum])
-      {
-          char strName[255];
-          sprintf(strName, "%s_poscaldata_%d", fHitPar->GetName(),inum);
-          
-          if(!fRpcCalib){
-              fhPos[inum] = new TH1F(strName, "", 750,0.,1500.);
-          }
-          else{
-              fhPos[inum] = new TH1F(strName, "", 4000,-2000.,2000.);
-          }
+           charge_left=map1->GetTotL_T();
+           time_left= map1->GetTimeL_T();      
+           ichn_left = map1->GetChannelId();
+//       }
+       
+       if (NULL == fhPos[inum])
+       {
+           char strName[255];
+           char strName_par[255];
+           sprintf(strName, "%s_poscaldata_%d", fHitPar->GetName(),inum);
+           sprintf(strName_par, "%s_parcaldata_%d", fHitPar->GetName(),inum);
+           
+           if(!fRpcCalib){
+               fhPos[inum] = new TH1F(strName, "", 750,0.,1500.);
+           }
+           else{
+               fhPos[inum] = new TH1F(strName, "", 4000,-2000.,2000.);
+               fhPar[inum] = new TH1F(strName_par, "", 4000,0.,4000.);
+           }
 
-      }
-      if (NULL == fhTime[inum])
-      {
-          char strName[255];
-          sprintf(strName, "%s_timecaldata_%d", fHitPar->GetName(),inum);
-          fhTime[inum] = new TH1F(strName, "", 800,-200,-150);
-      } 
+       }
+       if (NULL == fhTime[inum])
+       {
+           char strName[255];
+           sprintf(strName, "%s_timecaldata_%d", fHitPar->GetName(),inum);
+           fhTime[inum] = new TH1F(strName, "", 800,-200,-150);
+       } 
    
-      if(ichn_left == ichn_right){
-        
-        if(!fRpcCalib){
-            fhPos[inum]->Fill((time_left-time_right)*CSTRIP/2. -(fHitPar->GetCalParams1()->GetAt(inum)-2000));
-        }
-        else{
-            fhPos[inum]->Fill((time_left - time_right)*CSTRIP/2.);
-        }
-        fhTime[inum]->Fill((time_left + time_right)/2.); 
+       //if(ichn_left == ichn_right){
+         
+         if(!fRpcCalib){
+          fhPos[inum]->Fill((time_left-time_right)*CSTRIP/2. -(fHitPar->GetCalParams1()->GetAt(inum)-2000));
+         }
+         else{
+             fhPos[inum]->Fill((time_left - time_right)*CSTRIP/2.);
+         }
+         fhTime[inum]->Fill((time_left + time_right)/2.); 
+       //}
       }
-     }
-     if(iDetector==1){
-      if (NULL == fhPos[inum])
-      {
-          char strName[255];
-          sprintf(strName, "%s_poscaldata_%d", fHitPar->GetName(),inum);
-          fhPos[inum] = new TH1F(strName, "", 5000,-2500.,2500.);
+      if(iDetector==1){
+       if (NULL == fhPos[inum])
+       {
+           char strName[255];
+           sprintf(strName, "%s_poscaldata_%d", fHitPar->GetName(),inum);
+           fhPos[inum] = new TH1F(strName, "", 5000,-2500.,2500.);
+       }
+       fhPos[inum]->Fill((map1->GetTimeR_B() - map1->GetTimeL_T())*CSCINT/2.);
       }
-      fhPos[inum]->Fill((map1->GetTimeR_B() - map1->GetTimeL_T())*CSCINT/2.);
      }
     }
     return;
@@ -219,40 +236,15 @@ void R3BRpcCal2HitPar::FinishTask() {
 void R3BRpcCal2HitPar::CalculateParsStrip(){
 
     for (int t = 0; t < N_STRIP_NB; t++){
-
-        if (NULL == fhPos[t] && t>=41){continue;}
-
-        fHitPar->SetCalParams4(0,t);
-
-        int bin_max = fhPos[t]->GetMaximumBin();
-        
-        float threshold = 
-        (fhPos[t]->GetBinContent(bin_max - 1) + fhPos[t]->GetBinContent(bin_max) + 
-        fhPos[t]->GetBinContent(bin_max + 1) )/120.;
-
-        for(int i = 1; i <= bin_max; i++){
-            //std::cout << i << std::endl;
-            float mean = (fhPos[t]->GetBinContent(i-1) + fhPos[t]->GetBinContent(i) + fhPos[t]->GetBinContent(i+1))/3.;
-            if (fhPos[t]->GetBinContent(i) >= threshold /*&& mean >= threshold*/){
-                fHitPar->SetCalParams1(i,t);
-                break;
-            }                
-        }
-    }
-
-    for (int t = 0; t < N_STRIP_NB; t++){
-
-        if (NULL == fhTime[t]){continue;}
-
-        int bin_max = fhTime[t]->GetMaximumBin();
-
-        fhTime[t]->GetXaxis()->SetRange(bin_max-50,bin_max+50);
-
-        fhTime[t]->Fit("gaus");
-
-        TF1 *g = (TF1*)fhTime[t]->GetListOfFunctions()->FindObject("gaus");
-        fHitPar->SetCalParams3(g->GetParameter(1),t);
-
+     if (NULL == fhPos[t] || t>=41 || NULL == fhPar[t]){continue;}
+     fHitPar->SetCalParams4(0,t);
+     double sum = 0; 
+     for(int i = 1; i <=4000 ; i++){
+      sum += fhPos[t]->GetBinContent(i);
+      fhPar[t]->Fill(i,sum);
+     }
+     fhPar[t]->Scale(fhPar[t]->GetXaxis()->GetBinWidth(1)/(sum));
+     fHitPar->SetCalParams1(fhPar[t]->FindFirstBinAbove(0.01,1),t);
     }
 }
 

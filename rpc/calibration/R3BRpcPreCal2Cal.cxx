@@ -132,8 +132,8 @@ void R3BRpcPreCal2Cal::Exec(Option_t* option)
      
            if (map1->GetSide() == 1)
            {       
-              tot_R_B = map1->GetTot() - fParCont->GetAt(inum);
-              tot_L_T = nxt_chn->GetTot() - fParCont->GetAt(nxt_inum);
+              tot_R_B = map1->GetTot() - fParCont->GetAt(inum) + 5;
+              tot_L_T = nxt_chn->GetTot() - fParCont->GetAt(nxt_inum) + 5;
        
               time_R_B = map1->GetTime();
               time_L_T = nxt_chn->GetTime();
@@ -142,8 +142,8 @@ void R3BRpcPreCal2Cal::Exec(Option_t* option)
      
            else
            {
-              tot_L_T = map1->GetTot() - fParCont->GetAt(inum);
-              tot_R_B = nxt_chn->GetTot() - fParCont->GetAt(nxt_inum);
+              tot_L_T = map1->GetTot() - fParCont->GetAt(inum) + 5;
+              tot_R_B = nxt_chn->GetTot() - fParCont->GetAt(nxt_inum) + 5;
      
               time_L_T = map1->GetTime();
               time_R_B = nxt_chn->GetTime();

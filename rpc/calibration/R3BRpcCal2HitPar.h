@@ -77,11 +77,13 @@ class R3BRpcCal2HitPar : public FairTask
     Bool_t  fRpcCalib;
     Int_t fNumChannels;
 
+    R3BEventHeader* fR3BEventHeader; /**< Event header - input data. */
     TH1F* fhPos[N_STRIP_NB]; 
-    TH1F* fhTime[N_STRIP_NB]; 
+      TH1F* fhPar[N_STRIP_NB]; 
+      TH1F* fhTime[N_STRIP_NB]; 
 
-    R3BRpcHitPar* fHitPar;    /**< Container for Hit parameters. >*/
-    TClonesArray* fCalDataCA; /**< Array with Cal RPC Strip - input data. >*/
+      R3BRpcHitPar* fHitPar;    /**< Container for Hit parameters. >*/
+      TClonesArray* fCalDataCA; /**< Array with Cal RPC Strip - input data. >*/
 
   public:
     ClassDef(R3BRpcCal2HitPar, 1);

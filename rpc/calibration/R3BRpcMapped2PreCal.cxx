@@ -51,7 +51,7 @@ R3BRpcMapped2PreCal::~R3BRpcMapped2PreCal()
 InitStatus R3BRpcMapped2PreCal::Init()
 {
     LOG(INFO) << "R3BRpcMapped2PreCal::Init()";
-
+    std::cout << " here" << std::endl;
     // INPUT DATA
     FairRootManager* rootManager = FairRootManager::Instance();
     if (!rootManager)

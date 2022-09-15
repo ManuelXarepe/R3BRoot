@@ -139,13 +139,11 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
  double time=0;
  double tof=0;
  bool valid=false;
-
  UInt_t inum;
  for (Int_t i = 0; i < nHits; i++)
  {
   auto map1 = (R3BRpcCalData*)(fRpcCalDataCA->At(i));
   iDetector = map1->GetDetId() ;
-  
   if(iDetector==0){
    if(map1->GetTotR_B() >=  charge_right){
        charge_right=map1->GetTotR_B();
@@ -159,7 +157,7 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
    } 
    if(ichn_left == ichn_right && ichn_right !=0){
     position = ((time_left-time_right)*CSTRIP/2. 
-     	       - (fParCont1->GetAt(map1->GetChannelId() -1)-2000));
+     	       - (fParCont1->GetAt(ichn_left -1)-2000));
     charge   =  (charge_left + charge_right)/2.;
     time     = (time_left + time_right)/2.; //- fParCont3->GetAt(inum);
     tof      = fTimeStitch->GetTime(time - fR3BEventHeader->GetTStart(), "trb", "vftx");
@@ -169,7 +167,7 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
   if(iDetector==1){
    double position_NB = (map1->GetTimeR_B()-map1->GetTimeL_T())*CSCINT/2. 
            -(fParCont1->GetAt(41 + map1->GetChannelId() -1) - 2500);
-   double charge_NB = (map1->GetTotR_B() + map1->GetTotL_T())/2.;
+   double charge_NB = pow((map1->GetTotR_B()* map1->GetTotL_T()),0.5);
    double time_NB = (map1->GetTimeR_B() + map1->GetTimeL_T())/2.;
    auto tof_NB = fTimeStitch->GetTime(time_NB - fR3BEventHeader->GetTStart(), "trb", "vftx");
    AddHitStrip(iDetector,map1->GetChannelId(),time_NB,position_NB,charge_NB,tof_NB);

@@ -270,7 +270,6 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
 
     }
 
-
     for (Int_t strip = 0; strip < 41; strip++)
     {
         for (Int_t side = 0; side < 2; side++)
@@ -294,7 +293,6 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
                 // It fills the R3BRpcStripCalData
                 TClonesArray& clref = *fRpcPreCalDataCA;
                 Int_t size = clref.GetEntriesFast();
-		//cout << "strip  " << entry_lead.time << " " << strip << " " << side <<endl;
                 new (clref[size]) R3BRpcPreCalData(0,strip + 1, entry_lead.time, tot, side);
                 ++lead_i;
                 ++trail_i;

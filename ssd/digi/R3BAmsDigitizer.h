@@ -11,31 +11,46 @@
  * or submit itself to any jurisdiction.                                      *
  ******************************************************************************/
 
-#include "R3BEventHeader.h"
-//#include "FairLogger.h"
-//#include "FairRootManager.h"
+#ifndef R3BAmsDigitizer_H
+#define R3BAmsDigitizer_H 1
 
-R3BEventHeader::R3BEventHeader()
-    : FairEventHeader()
-    , fExpId(0)
-    , fEventno(0)
-    , fTrigger(0)
-    , fTimeStamp(0)
-    , fTpat(0)
-    , fTStart(0)
+#include "FairTask.h"
+#include "R3BAmsStripCalData.h"
+#include "R3BTraPoint.h"
+#include "Rtypes.h"
+
+class TClonesArray;
+
+class R3BAmsDigitizer : public FairTask
 {
-}
+  public:
+    /** Standard contructor **/
+    R3BAmsDigitizer();
 
-R3BEventHeader::~R3BEventHeader() {}
+    /** Destructor **/
+    virtual ~R3BAmsDigitizer();
 
-void R3BEventHeader::Register(Bool_t Persistence)
-{
-    /*   FairRootManager* frm = FairRootManager::Instance();
-       LOG(INFO) << "R3BEventHeader::Register of R3BEventHeader";
-       if (!frm)
-           LOG(FATAL) << "R3BEventHeader::FairRootManager no found";
-       frm->Register("EventHeader.", "R3BEvtHeader", this, Persistence);
-       */
-}
+    /** Virtual method Init **/
+    virtual InitStatus Init();
 
-ClassImp(R3BEventHeader)
+    /** Virtual method Exec **/
+    virtual void Exec(Option_t* opt);
+
+    /** Virtual method Reset **/
+    virtual void Reset();
+
+  private:
+    TClonesArray* fPointData;
+    TClonesArray* fCalData;
+
+    /** Private method AddCal
+     **
+     ** Adds a R3BAmsStripCalData data
+     **/
+    R3BAmsStripCalData* AddCal(Int_t detid, Int_t sideid, Int_t stripid, Double_t energy);
+
+  public:
+    ClassDef(R3BAmsDigitizer, 1);
+};
+
+#endif /* R3BAmsDigitizer_H */

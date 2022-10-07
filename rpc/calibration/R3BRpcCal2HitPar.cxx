@@ -165,7 +165,7 @@ void R3BRpcCal2HitPar::Exec(Option_t* opt)
      sprintf(strName, "%s_timecaldata_%d", fHitPar->GetName(),inum);
      fhTime[inum] = new TH1F(strName, "", 500,-40,-15);
     } 
-    fhPos[inum]->Fill(time_rpc*CSTRIP/2.);
+    fhPos[inum]->Fill(pos_rpc*CSTRIP/2.);
    }
    if(iDetector==1){
     time_scint = (map1->GetTimeR_B()+map1->GetTimeL_T())/2.;

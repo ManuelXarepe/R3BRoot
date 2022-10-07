@@ -11,28 +11,37 @@
  * or submit itself to any jurisdiction.                                      *
  ******************************************************************************/
 
-#ifndef R3BNEULANDMAPPED2CAL_H
-#define R3BNEULANDMAPPED2CAL_H
+// ------------------------------------------------------------
+// -----                  R3BLosMapped2Cal                -----
+// -----            Created 4-02-2016 by R.Plag           -----
+// ----- Convert mapped data to time calibrated data      -----
+// ------------------------------------------------------------
+
+#ifndef R3BLOSMAPPED2TCAL
+#define R3BLOSMAPPED2TCAL
+
+#include <map>
+#include <vector>
 
 #include "FairTask.h"
-#include "TH2F.h"
 
 class TClonesArray;
+class TH1F;
+class TH2F;
 class R3BTCalModulePar;
 class R3BTCalPar;
 class R3BEventHeader;
-class R3BNeulandMappingPar;
+class R3BLosMappedData;
+class R3BLosTCalData;
 
 /**
- * An analysis task to apply TCAL calibration for NeuLAND.
- * This class reads NeuLAND raw items with TDC values and
+ * An analysis task to apply TCAL calibration for LOS.
+ * This class reads LOS mapped items with TDC values and
  * produces time items with time in [ns]. It requires TCAL
  * calibration parameters, which are produced in a separate
- * analysis run containing R3BNeulandMapped2CalPar task.
- * @author D. Kresan
- * @since September 7, 2015
+ * analysis run.
  */
-class R3BNeulandMapped2Cal : public FairTask
+class R3BLosMapped2TCal : public FairTask
 {
 
   public:
@@ -40,7 +49,7 @@ class R3BNeulandMapped2Cal : public FairTask
      * Default constructor.
      * Creates an instance of the task with default parameters.
      */
-    R3BNeulandMapped2Cal();
+    R3BLosMapped2TCal();
 
     /**
      * Standard constructor.
@@ -48,13 +57,13 @@ class R3BNeulandMapped2Cal : public FairTask
      * @param name a name of the task.
      * @param iVerbose a verbosity level.
      */
-    R3BNeulandMapped2Cal(const char* name, Int_t iVerbose = 1);
+    R3BLosMapped2TCal(const char* name, Int_t iVerbose = 1);
 
     /**
      * Destructor.
      * Frees the memory used by the object.
      */
-    virtual ~R3BNeulandMapped2Cal();
+    virtual ~R3BLosMapped2TCal();
 
     /**
      * Method for task initialization.
@@ -62,39 +71,33 @@ class R3BNeulandMapped2Cal : public FairTask
      * the event loop.
      * @return Initialization status. kSUCCESS, kERROR or kFATAL.
      */
-    virtual InitStatus Init();
+    InitStatus Init();
 
     /**
      * Method for initialization of the parameter containers.
      * Called by the framework prior to Init() method.
      */
-    virtual void SetParContainers();
+    void SetParContainers();
 
     /**
      * Method for re-initialization of parameter containers
      * in case the Run ID has changed.
      */
-    virtual InitStatus ReInit();
+    InitStatus ReInit();
 
     /**
      * Method for event loop implementation.
      * Is called by the framework every time a new event is read.
      * @param option an execution option.
      */
-    virtual void Exec(Option_t* option);
+    void Exec(Option_t*);
 
     /**
      * A method for finish of processing of an event.
      * Is called by the framework for each event after executing
      * the tasks.
      */
-    virtual void FinishEvent();
-
-    /**
-     * Method for finish of the task execution.
-     * Is called by the framework after processing the event loop.
-     */
-    virtual void FinishTask();
+    void FinishEvent();
 
     /**
      * Method for setting the trigger value.
@@ -104,69 +107,49 @@ class R3BNeulandMapped2Cal : public FairTask
 
     /**
      * Method for setting the number of NeuLAND modules.
-     * @param nPlanes a number of planes.
-     * @param nBars a number of bars per plane.
+     * @param nPMTs a number of photomultipliers.
+     * @param n17 a number of channels with stop signal (17-th channel).
      */
-    inline void SetNofModules(Int_t nPlanes, Int_t nBars)
+
+    inline void SetNofModules(Int_t nDets, Int_t nChs)
     {
-        fNofPlanes = nPlanes;
-        fNofBarsPerPlane = nBars;
-        fNofPMTs = nPlanes * nBars * 2;
+        fNofDetectors = nDets;
+        fNofChannels = nChs; //=4 or 8  or 16
     }
 
-    /**
-     * Method to set running mode for pulser data analysis.
-     * @param mode a boolean flag - if TRUE events with all PMT's fired will be taken.
-     */
-    inline void SetPulserMode(Bool_t mode = kTRUE) { fPulserMode = mode; }
-
-    /**
-     * Method to enable / disable walk corrections.
-     * @param walk a boolean flag - if TRUE, walk corrections will be applied.
-     */
-    inline void EnableWalk(Bool_t walk = kTRUE) { fWalkEnabled = walk; }
-
-    inline void SetNhitmin(Int_t nhitmin = 1) { fNhitmin = nhitmin; }
+    /** Accessor to select online mode **/
+    void SetOnline(Bool_t option) { fOnline = option; }
 
   private:
-    void SetParameter();
+    size_t GetCalLookupIndex(R3BLosMappedData const&) const;
 
-    Int_t fNEvents;      /**< Event counter. */
-    Bool_t fPulserMode;  /**< Running with pulser data. */
-    Bool_t fWalkEnabled; /**< Enable / Disable walk correction. */
+    TClonesArray* fMappedItems; /**< Array with mapped items - input data. */
+    TClonesArray* fMappedTriggerItems;
+    TClonesArray* fTCalItems; /**< Array with cal items - output data. */
+    TClonesArray* fTCalTriggerItems;
 
-    TClonesArray* fMapped;        /**< Array with raw items - input data. */
-    TClonesArray* fMappedTrigger; /**< Array with raw items - input data. */
-    TClonesArray* fCal;           /**< Array with time items - output data. */
-    Int_t fNPmt;                  /**< Number of produced time items per event. */
-
-    R3BNeulandMappingPar* fMapPar;
+    Int_t fNofTCalItems; /**< Number of produced time items per event. */
 
     R3BTCalPar* fTcalPar; /**< TCAL parameter container. */
     UInt_t fNofTcalPars;  /**< Number of modules in parameter file. */
 
+    // check for trigger should be done globablly (somewhere else)
     R3BEventHeader* header; /**< Event header. */
     Int_t fTrigger;         /**< Trigger value. */
 
-    Int_t fNofPlanes;       /**< Number of photomultipliers. */
-    Int_t fNofBarsPerPlane; /**< Number of photomultipliers. */
-    Int_t fNofPMTs;         /**< Number of photomultipliers. */
+    UInt_t fNofDetectors; /**< Number of detectors. */
+    UInt_t fNofChannels;  /**< Number of channels per detector. */
+    Double_t fClockFreq;  /**< Clock cycle in [ns]. */
+    UInt_t fNEvent;
+    // Don't store data for online
+    Bool_t fOnline;
 
-    Double_t fClockFreq; /**< Clock cycle in [ns]. */
-
-    void MakeCal();
-
-    Double_t WalkCorrection(Double_t);
-
-    TH2F* htcal1;
-    TH2F* htcal2;
-    TH2F* htcal3;
-    TH2F* htcal4;
-
-    Int_t fNhitmin;
+    
+    R3BLosTCalData* AddTCalData(Int_t det, Int_t ch, Int_t typ, Double_t tns);
+    R3BLosTCalData* AddTriggerTCalData(Int_t det, Int_t ch, Int_t typ,  Double_t tns);
 
   public:
-    ClassDef(R3BNeulandMapped2Cal, 1)
+    ClassDef(R3BLosMapped2TCal, 2)
 };
 
 #endif

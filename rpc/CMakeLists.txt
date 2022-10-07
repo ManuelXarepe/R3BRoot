@@ -52,7 +52,7 @@ set(SRCS
 #Put here your sourcefiles
 sim/R3BRpc.cxx
 pars/R3BRpcContFact.cxx
-#R3BRpcDigitizer.cxx
+sim/R3BRpcDigitizer.cxx
 calibration/R3BRpcMapped2PreCalPar.cxx
 calibration/R3BRpcMapped2PreCal.cxx
 calibration/R3BRpcPreCal2CalPar.cxx

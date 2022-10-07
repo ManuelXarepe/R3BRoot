@@ -16,7 +16,7 @@
 
 #include "FairTask.h"
 #include "R3BRpc.h"
-#include "R3BRpcCalData.h"
+#include "R3BRpcHitData.h"
 #include "R3BRpcPars4Sim.h"
 #include "R3BRpcPoint.h"
 #include "Rtypes.h"
@@ -47,7 +47,7 @@ class R3BRpcDigitizer : public FairTask
     void SetParameter();
 
     TClonesArray* fRpcPointDataCA; //!  The RPC hit collection
-    TClonesArray* fRpcCalDataCA;   /**< Array with RPC Cal- output data. >*/
+    TClonesArray* fRpcHitDataCA;   /**< Array with RPC Cal- output data. >*/
 
     R3BRpcPars4Sim* fSim_Par; // Parameter Container for a Realistic Simulation
 
@@ -57,7 +57,7 @@ class R3BRpcDigitizer : public FairTask
      **
      ** Adds a RpcCal data
      **/
-    R3BRpcCalData* AddCal(Int_t ident, Double_t energy, ULong64_t time, Double_t tot_energy = 0.);
+    R3BRpcHitData* AddCal(Int_t detId, Int_t channelId, ULong64_t time,Double_t position,Double_t tot_energy=0,Double_t tof=0);
 
     inline void ResetParameters(){};
 

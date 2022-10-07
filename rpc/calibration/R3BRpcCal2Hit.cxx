@@ -36,8 +36,6 @@ R3BRpcCal2Hit::R3BRpcCal2Hit()
     : FairTask("R3B RPC Cal to Hit")
     , fParCont1(NULL)
     , fParCont2(NULL)
-    , fParCont3(NULL)
-    , fParCont4(NULL)
     , fRpcHitDataCA(NULL)
     , fRpcCalDataCA(NULL)
     , fR3BEventHeader(NULL)
@@ -107,8 +105,6 @@ InitStatus R3BRpcCal2Hit::Init()
     //fill the TArray with Tot parameters!!!
     fParCont1 = fHitPar->GetCalParams1();
     fParCont2 = fHitPar->GetCalParams2();
-    fParCont3 = fHitPar->GetCalParams3();
-    fParCont4 = fHitPar->GetCalParams4();
  
     // Definition of a time stich object to correlate times coming from different systems
     fTimeStitch = new R3BTimeStitch();
@@ -159,7 +155,7 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
     position = ((time_left-time_right)*CSTRIP/2. 
      	       - (fParCont1->GetAt(ichn_left -1)-2000));
     charge   =  (charge_left + charge_right)/2.;
-    time     = (time_left + time_right)/2.; //- fParCont3->GetAt(inum);
+    time     = (time_left + time_right)/2.- fParCont2->GetAt(inum);
     tof      = fTimeStitch->GetTime(time - fR3BEventHeader->GetTStart(), "trb", "vftx");
     valid = true;
    }

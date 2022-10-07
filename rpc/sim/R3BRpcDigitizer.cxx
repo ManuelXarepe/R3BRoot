@@ -14,7 +14,7 @@
 #include "R3BRpcDigitizer.h"
 #include "FairRootManager.h"
 #include "R3BRpc.h"
-#include "R3BRpcCalData.h"
+#include "R3BRpcHitData.h"
 #include "R3BRpcPoint.h"
 #include "TArrayD.h"
 #include "TClonesArray.h"
@@ -27,7 +27,7 @@
 R3BRpcDigitizer::R3BRpcDigitizer()
     : FairTask("R3B RPC Digitizer")
     , fRpcPointDataCA(NULL)
-    , fRpcCalDataCA(NULL)
+    , fRpcHitDataCA(NULL)
 {
 }
 
@@ -40,10 +40,10 @@ R3BRpcDigitizer::~R3BRpcDigitizer()
         fRpcPointDataCA->Delete();
         delete fRpcPointDataCA;
     }
-    if (fRpcCalDataCA)
+    if (fRpcHitDataCA)
     {
-        fRpcCalDataCA->Delete();
-        delete fRpcCalDataCA;
+        fRpcHitDataCA->Delete();
+        delete fRpcHitDataCA;
     }
 }
 
@@ -89,8 +89,8 @@ InitStatus R3BRpcDigitizer::Init()
         return kFATAL;
     }
 
-    fRpcCalDataCA = new TClonesArray("R3BRpcCalData", 10);
-    rootManager->Register("RpcCalData", "RPC Cal", fRpcCalDataCA, kTRUE);
+    fRpcHitDataCA = new TClonesArray("R3BRpcHitData", 10);
+    rootManager->Register("R3BRpcHitData", "RPC Cal", fRpcHitDataCA, kTRUE);
 
     SetParameter();
     return kSUCCESS;
@@ -121,27 +121,26 @@ void R3BRpcDigitizer::Exec(Option_t* option)
         time = pointData[i]->GetTime();
         energy = pointData[i]->GetEnergyLoss();
 
-        Int_t nCals = fRpcCalDataCA->GetEntriesFast();
+        Int_t nCals = fRpcHitDataCA->GetEntriesFast();
         Bool_t existHit = 0;
         if (nCals == 0)
-            AddCal(channelId, energy, time, 0);
+            AddCal(0,channelId,time,0,0,0);
         else
         {
             for (Int_t j = 0; j < nCals; j++)
             {
-                if (((R3BRpcCalData*)(fRpcCalDataCA->At(j)))->GetChannelId() == channelId)
+                if (((R3BRpcHitData*)(fRpcHitDataCA->At(j)))->GetChannelId() == channelId)
                 {
-                    ((R3BRpcCalData*)(fRpcCalDataCA->At(j)))->AddMoreEnergy(energy);
-                    if (((R3BRpcCalData*)(fRpcCalDataCA->At(j)))->GetTime() > time)
+                    if (((R3BRpcHitData*)(fRpcHitDataCA->At(j)))->GetTime() > time)
                     {
-                        ((R3BRpcCalData*)(fRpcCalDataCA->At(j)))->SetTime(time);
+                        ((R3BRpcHitData*)(fRpcHitDataCA->At(j)))->SetTime(time);
                     }
                     existHit = 1; // to avoid the creation of a new Hit
                     break;
                 }
             }
             if (!existHit)
-                AddCal(channelId, energy, time, 0);
+                AddCal(0,channelId,time,0,0,0);
         }
         existHit = 0;
     }
@@ -149,7 +148,7 @@ void R3BRpcDigitizer::Exec(Option_t* option)
     if (pointData)
         delete[] pointData;
 
-    Int_t nCals = fRpcCalDataCA->GetEntriesFast();
+    Int_t nCals = fRpcHitDataCA->GetEntriesFast();
     if (nCals == 0)
         return;
 }
@@ -157,23 +156,23 @@ void R3BRpcDigitizer::Exec(Option_t* option)
 void R3BRpcDigitizer::Reset()
 {
     // Clear the CA structure
-    LOG(DEBUG) << "Clearing RpcCalData Structure";
-    if (fRpcCalDataCA)
-        fRpcCalDataCA->Clear();
+    LOG(DEBUG) << "Clearing RpcHitData Structure";
+    if (fRpcHitDataCA)
+        fRpcHitDataCA->Clear();
 
     ResetParameters();
 }
 
-R3BRpcCalData* R3BRpcDigitizer::AddCal(Int_t ident, Double_t energy, ULong64_t time, Double_t tot_energy)
+R3BRpcHitData* R3BRpcDigitizer::AddCal(Int_t detId, Int_t channelId, ULong64_t time,Double_t position,Double_t tot_energy, Double_t tof)
 {
-    TClonesArray& clref = *fRpcCalDataCA;
+    TClonesArray& clref = *fRpcHitDataCA;
     Int_t size = clref.GetEntriesFast();
     if (fVerbose > 1)
-        LOG(INFO) << "-I- R3BRpcDigitizer: Adding RpcCalData "
-                  << " with unique identifier " << ident << " entering with " << energy * 1e06 << " keV  Time=" << time
+        LOG(INFO) << "-I- R3BRpcDigitizer: Adding RpcHitData "
+                  << " with unique identifier " << channelId << " Time=" << time << " at position=" << position 
                   << " tot_energy=" << tot_energy;
 
-    return new (clref[size]) R3BRpcCalData(ident, energy, time, tot_energy);
+    return new (clref[size]) R3BRpcHitData(0,channelId,time,position,tot_energy,tof);
 }
 
 ClassImp(R3BRpcDigitizer);

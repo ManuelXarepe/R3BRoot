@@ -66,9 +66,6 @@ void R3BRpc::Initialize()
 
     LOG(INFO) << "R3BRpc::Initialize()";
     LOG(DEBUG) << "R3BRpc: Vol (McId) def";
-
-    TGeoVolume* vol = gGeoManager->GetVolume("RpcWorld");
-    vol->SetVisibility(kFALSE);
 }
 
 Bool_t R3BRpc::ProcessHits(FairVolume* vol)

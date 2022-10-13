@@ -19,9 +19,7 @@
 #include "R3BLogger.h"
 
 #include "TClonesArray.h"
-#include "TFile.h"
 #include "ext_data_struct_info.hh"
-#include <iostream>
 
 /**
  ** ext_h101_alpide.h was created by running
@@ -34,15 +32,11 @@ extern "C"
 #include "ext_h101_alpide.h"
 }
 
-int prevevent = 0;
-
 R3BAlpideReader::R3BAlpideReader(EXT_STR_h101_ALPIDE_onion* data, size_t offset)
     : R3BReader("R3BAlpideReader")
     , fNEvent(1)
-    , fFileName("")
-    , fInput(NULL)
-    , ae(0)
     , fData(data)
+    , fNbDet(sizeof(fData->ALPIDE) / sizeof(fData->ALPIDE[0]))
     , fOffset(offset)
     , fOnline(kFALSE)
     , fArray(new TClonesArray("R3BAlpideMappedData"))
@@ -51,57 +45,25 @@ R3BAlpideReader::R3BAlpideReader(EXT_STR_h101_ALPIDE_onion* data, size_t offset)
 
 R3BAlpideReader::~R3BAlpideReader()
 {
-    R3BLOG(DEBUG1, "Destructor.");
+    R3BLOG(DEBUG1, "");
     if (fArray)
+    {
         delete fArray;
+    }
 }
 
 Bool_t R3BAlpideReader::Init(ext_data_struct_info* a_struct_info)
 {
     Int_t ok;
     R3BLOG(INFO, "");
-    /*
     EXT_STR_h101_ALPIDE_ITEMS_INFO(ok, *a_struct_info, fOffset, EXT_STR_h101_ALPIDE, 0);
 
-    if (!ok)
-    {
-        R3BLOG(error, "Failed to setup structure information.");
-        return kFALSE;
-    }
-    */
+    R3BLOG_IF(FATAL, !ok, "Failed to setup structure information.");
 
     // Register output array in tree
     FairRootManager::Instance()->Register("AlpideMappedData", "ALPIDE_Map", fArray, !fOnline);
-    fArray->Clear();
-
-    fInput = new ifstream(fFileName);
-    if (!fInput->is_open())
-    {
-        R3BLOG(warning, "Cannot open input file: " << fFileName);
-        fInput = NULL;
-    }
-    else
-    {
-        R3BLOG(info, "Open input file: " << fFileName);
-    }
-
-    TFile* fi = new TFile(fRootName);
-    fTree = (TTree*)fi->Get("pixTree");
-    if (fTree)
-    {
-        R3BLOG(info, "Open input file: " << fRootName);
-
-        R3BLOG(INFO, "Root file entries " << fTree->GetEntries());
-
-        fRow = fTree->FindLeaf("row");
-        fCol = fTree->FindLeaf("col");
-        trgNum = fTree->FindLeaf("trgNum");
-        fDet = fTree->FindLeaf("chipid");
-        trgTime = fTree->FindLeaf("trgTime");
-        fNEvent = 0;
-    }
-    else
-        fTree = NULL;
+    Reset();
+    memset(fData, 0, sizeof(*fData));
 
     return kTRUE;
 }
@@ -110,63 +72,65 @@ Bool_t R3BAlpideReader::Read()
 {
     R3BLOG(DEBUG1, "Event data: " << fNEvent);
 
-    if (fInput)
+    for (int d = 0; d < fNbDet; d++)
     {
-        if (ae == 0)
-            *fInput >> ae >> b >> c >> d >> e >> f >> g;
 
-        while (!fInput->eof())
+        /*      R3BLOG_IF(DEBUG1,
+                        fData->ALPIDE[d].COL != fData->ALPIDE[d].ROW || fData->ALPIDE[d].COL != fData->ALPIDE[d].ADDRESS
+           || fData->ALPIDE[d].ROW != fData->ALPIDE[d].ADDRESS, "Array sizes mismatch for detector "
+                            << d + 1 << ", ALPIDE_CHIP:" << fData->ALPIDE[d].CHIP << ", ALPIDE_PRECHIP:"
+                            << fData->ALPIDE[d].PRECHIP << ", ALPIDE_REGION:" << fData->ALPIDE[d].REGION
+                            << ", ALPIDE_ENCODER_ID:" << fData->ALPIDE[d].ENCODER_ID
+                            << ", ALPIDE_ADDRESS:" << fData->ALPIDE[d].ADDRESS << ", ALPIDE_ROW:" <<
+           fData->ALPIDE[d].ROW
+                            << ", ALPIDE_COL:" << fData->ALPIDE[d].COL);
+      */
+        R3BLOG_IF(ERROR,
+                  fData->ALPIDE[d].REGION != fData->ALPIDE[d].ADDRESS,
+                  "Region/Address sizes mismatch for detector " << d + 1 << ", Region: " << fData->ALPIDE[d].REGION
+                                                                << " , Address: " << fData->ALPIDE[d].ADDRESS);
+
+        R3BLOG_IF(ERROR,
+                  fData->ALPIDE[d].ROW != fData->ALPIDE[d].COL,
+                  "Row/Col sizes mismatch for detector " << d + 1 << ", Row: " << fData->ALPIDE[d].ROW
+                                                         << " , Col: " << fData->ALPIDE[d].COL);
+
+        R3BLOG_IF(ERROR,
+                  fData->ALPIDE[d].CHIP != fData->ALPIDE[d].ROW,
+                  "Chip/Row sizes mismatch for detector " << d + 1 << ", Chip: " << fData->ALPIDE[d].CHIP
+                                                          << " , Row: " << fData->ALPIDE[d].ROW);
+
+        R3BLOG_IF(ERROR,
+                  fData->ALPIDE[d].CHIP != fData->ALPIDE[d].COL,
+                  "Chip/Col sizes mismatch for detector " << d + 1 << ", Chip: " << fData->ALPIDE[d].CHIP
+                                                          << " , Col: " << fData->ALPIDE[d].COL);
+
+        for (int r = 0; r < fData->ALPIDE[d].ROW; r++)
         {
 
-            if (fNEvent == ae)
-            {
-                new ((*fArray)[fArray->GetEntriesFast()]) R3BAlpideMappedData(d + 1, e + 1, f + 1, g + 1);
-            }
-            else if (ae > fNEvent)
-                goto next;
+            //  R3BLOG(DEBUG1,"det: "<<d+1 <<", region: "<<fData->ALPIDE[d].REGIONv[fData->ALPIDE[d].REGION-1]<< " ,
+            //  ads: " << fData->ALPIDE[d].ADDRESSv[fData->ALPIDE[d].ADDRESS-1]<< " , row: "<<
+            //  fData->ALPIDE[d].ROWv[r]<<" , col: "<< fData->ALPIDE[d].COLv[r]);
 
-            *fInput >> ae >> b >> c >> d >> e >> f >> g;
+            new ((*fArray)[fArray->GetEntriesFast()]) R3BAlpideMappedData(d + 1,
+                                                                          fData->ALPIDE[d].REGIONv[r],
+                                                                          fData->ALPIDE[d].ADDRESSv[r],
+                                                                          fData->ALPIDE[d].CHIPv[r],
+                                                                          fData->ALPIDE[d].ROWv[r],
+                                                                          fData->ALPIDE[d].COLv[r]);
         }
     }
 
-next:
-
-    if (fTree)
-     if (fNEvent < fTree->GetEntries())
-    {
-
-        if (fNEvent == 0)
-        {
-            fTree->GetEntry(fNEvent);
-            prevevent = 0;
-        }
-
-    newevent:
-        new ((*fArray)[fArray->GetEntriesFast()]) R3BAlpideMappedData(1, 1, fCol->GetValue() + 1, fRow->GetValue() + 1);
-
-        fTree->GetEntry(fNEvent++);
-
-        if (trgNum->GetValue() == prevevent)
-        {
-            //std::cout << "trgtime: " << trgTime->GetValue() << std::endl;
-            goto newevent;
-        }
-        else
-            prevevent++;
-    }
-
-    if (fNEvent > fTree->GetEntries())
-    {
-        R3BLOG(INFO, "Run finished");
-        return kFALSE;
-    }
     return kTRUE;
 }
 
 void R3BAlpideReader::Reset()
 {
     // Reset the output array
-    fArray->Clear();
+    if (fArray)
+    {
+        fArray->Clear();
+    }
 }
 
 ClassImp(R3BAlpideReader);

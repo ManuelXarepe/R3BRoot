@@ -324,7 +324,7 @@ void R3BAlpideOnlineSpectra::Exec(Option_t* option)
             auto hit = (R3BAlpideMappedData*)fMappedItems->At(ihit);
             if (!hit)
                 continue;
-            fh2_ColVsRow[hit->GetSensorId() - 1]->Fill(hit->GetCol(), hit->GetAds());
+            fh2_ColVsRow[hit->GetSensorId() - 1]->Fill(hit->GetCol(), hit->GetRow());
         }
     }
 

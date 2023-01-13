@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -46,12 +46,12 @@ R3BWhiterabbitMusicReader::~R3BWhiterabbitMusicReader()
 Bool_t R3BWhiterabbitMusicReader::Init(ext_data_struct_info* a_struct_info)
 {
     Int_t ok;
-    LOG(INFO) << "R3BWhiterabbitMusicReader::Init()";
+    LOG(info) << "R3BWhiterabbitMusicReader::Init()";
     EXT_STR_h101_WRMUSIC_ITEMS_INFO(ok, *a_struct_info, fOffset, EXT_STR_h101_WRMUSIC, 0);
 
     if (!ok)
     {
-        LOG(ERROR) << "R3BWhiterabbitMusicReader::Failed to setup structure information.";
+        LOG(error) << "R3BWhiterabbitMusicReader::Failed to setup structure information.";
         return kFALSE;
     }
 
@@ -60,10 +60,10 @@ Bool_t R3BWhiterabbitMusicReader::Init(ext_data_struct_info* a_struct_info)
     fEventHeader = (R3BEventHeader*)frm->GetObject("EventHeader.");
     if (!fEventHeader)
     {
-        LOG(WARNING) << "R3BWhiterabbitMusicReader::Init() EventHeader. not found";
+        LOG(warn) << "R3BWhiterabbitMusicReader::Init() EventHeader. not found";
     }
     else
-        LOG(INFO) << "R3BWhiterabbitMusicReader::Init() R3BEventHeader found";
+        LOG(info) << "R3BWhiterabbitMusicReader::Init() R3BEventHeader found";
 
     // Register output array in tree
     FairRootManager::Instance()->Register("WRMusicData", "WRMusic", fArray, !fOnline);

@@ -1,7 +1,7 @@
 
 ##############################################################################
 #   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    #
-#   Copyright (C) 2019 Members of R3B Collaboration                          #
+#   Copyright (C) 2019-2023 Members of R3B Collaboration                     #
 #                                                                            #
 #             This software is distributed under the terms of the            #
 #                 GNU General Public Licence (GPL) version 3,                #
@@ -31,6 +31,7 @@ ${R3BROOT_SOURCE_DIR}/r3bdata/losData
 ${R3BROOT_SOURCE_DIR}/r3bdata/wrData
 ${R3BROOT_SOURCE_DIR}/rpc
 ${R3BROOT_SOURCE_DIR}/rpc/sim
+${R3BROOT_SOURCE_DIR}/rpc/digi
 ${R3BROOT_SOURCE_DIR}/rpc/pars
 ${R3BROOT_SOURCE_DIR}/rpc/calibration
 ${R3BROOT_SOURCE_DIR}/rpc/online
@@ -51,7 +52,7 @@ set(SRCS
 #Put here your sourcefiles
 sim/R3BRpc.cxx
 pars/R3BRpcContFact.cxx
-sim/R3BRpcDigitizer.cxx
+#digi/R3BRpcDigitizer.cxx
 calibration/R3BRpcMapped2PreCalPar.cxx
 calibration/R3BRpcMapped2PreCal.cxx
 calibration/R3BRpcPreCal2CalPar.cxx
@@ -75,3 +76,6 @@ set(DEPENDENCIES
     R3BBase R3BTracking R3BData R3BTCal)
 
 GENERATE_LIBRARY()
+
+add_subdirectory(geobase)
+add_subdirectory(test)

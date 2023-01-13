@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -28,6 +28,7 @@ class TClonesArray;
 class R3BAlpideMappingPar;
 class R3BTGeoPar;
 class R3BAlpideGeometry;
+class TVector3;
 
 class R3BAlpideCal2Hit : public FairTask
 {
@@ -72,19 +73,16 @@ class R3BAlpideCal2Hit : public FairTask
 
     R3BTGeoPar* fTargetGeoPar;
     R3BTGeoPar* fAlpideGeoPar;
-    Int_t fGeometryVersion;
+    Int_t fGeoversion;
     R3BAlpideGeometry* fAlpideGeo;
     R3BAlpideMappingPar* fMap_Par; /**< Parameter container. >*/
     TClonesArray* fAlpideCalData;  // Array with Alpide Cal input data
     TClonesArray* fAlpideHitData;  // Array with Alpide Hit output data
     TClonesArray* fAlpideCluster;  // Array with clusters
-    TClonesArray* fAlpidePixel;
-
-    /** Method GetAnglesVector (calls R3BAlpideGeometry::GetAngles(id)) **/
-    TVector3 GetAnglesVector(int id);
+                                   // TClonesArray* fAlpidePixel;
 
     // Private method AddHitData
-    R3BAlpideHitData* AddHitData(UShort_t senId, Double_t posl, Double_t post, UInt_t clustersize);
+    R3BAlpideHitData* AddHitData(UShort_t senId, UInt_t clustersize, Double_t x, Double_t y);
 
   public:
     // Class definition

@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -144,9 +144,8 @@ class R3BLosMapped2TCal : public FairTask
     // Don't store data for online
     Bool_t fOnline;
 
-    
     R3BLosTCalData* AddTCalData(Int_t det, Int_t ch, Int_t typ, Double_t tns);
-    R3BLosTCalData* AddTriggerTCalData(Int_t det, Int_t ch, Int_t typ,  Double_t tns);
+    R3BLosTCalData* AddTriggerTCalData(Int_t det, Int_t ch, Int_t typ, Double_t tns);
 
   public:
     ClassDef(R3BLosMapped2TCal, 2)

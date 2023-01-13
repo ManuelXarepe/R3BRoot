@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -12,7 +12,7 @@
  ******************************************************************************/
 
 #include "R3BCalifavsTofDOnlineSpectra.h"
-#include "R3BCalifaHitData.h"
+#include "R3BCalifaClusterData.h"
 #include "R3BEventHeader.h"
 #include "R3BLogger.h"
 #include "R3BTofdHitData.h"
@@ -52,7 +52,7 @@ R3BCalifavsTofDOnlineSpectra::R3BCalifavsTofDOnlineSpectra(const TString& name, 
 
 R3BCalifavsTofDOnlineSpectra::~R3BCalifavsTofDOnlineSpectra()
 {
-    R3BLOG(DEBUG1, "");
+    R3BLOG(debug1, "");
     if (fHitItemsCalifa)
         delete fHitItemsCalifa;
     if (fHitItemsTofd)
@@ -64,15 +64,15 @@ void R3BCalifavsTofDOnlineSpectra::SetParContainers()
     // Parameter Container
     // Reading amsStripCalPar from FairRuntimeDb
     FairRuntimeDb* rtdb = FairRuntimeDb::instance();
-    R3BLOG_IF(FATAL, !rtdb, "FairRuntimeDb not found");
+    R3BLOG_IF(fatal, !rtdb, "FairRuntimeDb not found");
 }
 
 InitStatus R3BCalifavsTofDOnlineSpectra::Init()
 {
-    R3BLOG(INFO, "");
+    R3BLOG(info, "");
     FairRootManager* mgr = FairRootManager::Instance();
 
-    R3BLOG_IF(FATAL, NULL == mgr, "FairRootManager not found");
+    R3BLOG_IF(fatal, NULL == mgr, "FairRootManager not found");
 
     header = (R3BEventHeader*)mgr->GetObject("EventHeader.");
 
@@ -80,11 +80,11 @@ InitStatus R3BCalifavsTofDOnlineSpectra::Init()
     run->GetHttpServer()->Register("", this);
 
     // get access to Hit data
-    fHitItemsCalifa = (TClonesArray*)mgr->GetObject("CalifaHitData");
-    R3BLOG_IF(FATAL, !fHitItemsCalifa, "CalifaHitData not found");
+    fHitItemsCalifa = (TClonesArray*)mgr->GetObject("CalifaClusterData");
+    R3BLOG_IF(fatal, !fHitItemsCalifa, "CalifaClusterData not found");
 
     fHitItemsTofd = (TClonesArray*)mgr->GetObject("TofdHit");
-    R3BLOG_IF(WARNING, !fHitItemsTofd, "TofdHit not found");
+    R3BLOG_IF(warn, !fHitItemsTofd, "TofdHit not found");
 
     // Create histograms for detectors
 
@@ -150,7 +150,7 @@ InitStatus R3BCalifavsTofDOnlineSpectra::ReInit()
 
 void R3BCalifavsTofDOnlineSpectra::Reset_Histo()
 {
-    R3BLOG(INFO, "");
+    R3BLOG(info, "");
     for (int i = 0; i < 2; i++)
     {
         fh2_Califa_theta_phi[i]->Reset();
@@ -177,7 +177,7 @@ void R3BCalifavsTofDOnlineSpectra::Exec(Option_t* option)
     Int_t nHits = fHitItemsCalifa->GetEntriesFast();
     for (Int_t ihit = 0; ihit < nHits; ihit++)
     {
-        auto hit = (R3BCalifaHitData*)fHitItemsCalifa->At(ihit);
+        auto hit = (R3BCalifaClusterData*)fHitItemsCalifa->At(ihit);
         if (hit->GetEnergy() < fMinProtonE)
             continue;
 
@@ -198,7 +198,7 @@ void R3BCalifavsTofDOnlineSpectra::Exec(Option_t* option)
         Double_t califa_e[nHits];
         for (Int_t ihit = 0; ihit < nHits; ihit++)
         {
-            auto hit = (R3BCalifaHitData*)fHitItemsCalifa->At(ihit);
+            auto hit = (R3BCalifaClusterData*)fHitItemsCalifa->At(ihit);
             if (!hit)
                 continue;
             theta = hit->GetTheta() * TMath::RadToDeg();

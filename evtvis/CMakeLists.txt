@@ -1,6 +1,6 @@
 ##############################################################################
 #   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    #
-#   Copyright (C) 2019 Members of R3B Collaboration                          #
+#   Copyright (C) 2019-2023 Members of R3B Collaboration                     #
 #                                                                            #
 #             This software is distributed under the terms of the            #
 #                 GNU General Public Licence (GPL) version 3,                #
@@ -44,7 +44,7 @@ set(SRCS
 R3BEventManager.cxx
 R3BEventManagerEditor.cxx
 R3BCalifaEventDisplay.cxx
-R3BCalifaHitEventDisplay.cxx
+R3BCalifaClusterEventDisplay.cxx
 R3BMCTracks.cxx
 R3BIonName.cxx
 )

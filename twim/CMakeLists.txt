@@ -1,6 +1,6 @@
 ##############################################################################
 #   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    #
-#   Copyright (C) 2019 Members of R3B Collaboration                          #
+#   Copyright (C) 2019-2023 Members of R3B Collaboration                     #
 #                                                                            #
 #             This software is distributed under the terms of the            #
 #                 GNU General Public Licence (GPL) version 3,                #
@@ -47,20 +47,6 @@ set(LINK_DIRECTORIES ${ROOT_LIBRARY_DIR} ${FAIRROOT_LIBRARY_DIR} )
 
 link_directories( ${LINK_DIRECTORIES})
 
-#set(SRCS
-#Put here your sourcefiles
-#*.cxx
-#./sim/R3BSofTwim.cxx
-#./sim/R3BSofTwimDigitizer.cxx
-#./par/R3BSofTwimContFact.cxx
-#./par/R3BSofTwimCalPar.cxx
-#./par/R3BSofTwimHitPar.cxx
-#./calibration/R3BSofTwimMapped2Cal.cxx
-#./calibration/R3BSofTwimCal2Hit.cxx
-#./calibration/R3BSofTwimMapped2CalPar.cxx
-#./ana/R3BTwimVertexReconstruction.cxx
-#)
-
 file(GLOB SRCS 
 ./sim/*.cxx 
 ./digi/*.cxx
@@ -81,3 +67,6 @@ set(DEPENDENCIES
   R3BBase R3BData R3BTracking)
 
 GENERATE_LIBRARY()
+
+add_subdirectory(geobase)
+add_subdirectory(test)

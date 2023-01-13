@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -12,10 +12,10 @@
  ******************************************************************************/
 
 #include "TClonesArray.h"
+#include "TF1.h"
 #include "TMath.h"
 #include "TObjArray.h"
 #include "TVector3.h"
-#include "TF1.h"
 
 #include "FairLogger.h"
 #include "FairRootManager.h"
@@ -56,15 +56,15 @@ R3BRpcCal2HitPar::R3BRpcCal2HitPar(const char* name, Int_t iVerbose)
 
 R3BRpcCal2HitPar::~R3BRpcCal2HitPar()
 {
- LOG(INFO) << "R3BRpcCal2HitPar: Delete instance";
- if (fCalDataCA)
- delete fCalDataCA;
+    LOG(info) << "R3BRpcCal2HitPar: Delete instance";
+    if (fCalDataCA)
+        delete fCalDataCA;
 }
 
 void R3BRpcCal2HitPar::SetParContainers()
 {
  // Parameter Container
- // Reading califaMappingPar from FairRuntimeDb
+ // Reading RPCHitPar from FairRuntimeDb
  FairRuntimeDb* rtdb = FairRuntimeDb::instance();
  if (!rtdb)
  {
@@ -200,9 +200,6 @@ void R3BRpcCal2HitPar::FinishTask() {
  fHitPar->printParams();
  fHitPar->Write();
 }
-
-
-
 void R3BRpcCal2HitPar::CalculateParsPosStrip(){
  for (int t = 0; t < N_STRIP_NB; t++){
   if (NULL == fhPos[t] || t>=41 || NULL == fhPar[t]){continue;}

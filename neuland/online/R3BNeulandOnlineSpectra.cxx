@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -19,6 +19,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "THttpServer.h"
+#include <FairRootManager.h>
 #include <iostream>
 #include <limits>
 
@@ -60,10 +61,10 @@ InitStatus R3BNeulandOnlineSpectra::Init()
 
     fEventHeader = (R3BEventHeader*)ioman->GetObject("EventHeader.");
     if (fEventHeader == nullptr)
-      {
+    {
         throw std::runtime_error("R3BNeulandOnlineSpectra: No R3BEventHeader");
-      }
-    
+    }
+
     fNeulandMappedData.Init();
     fNeulandCalData.Init();
     fNeulandHits.Init();
@@ -332,14 +333,14 @@ void R3BNeulandOnlineSpectra::Exec(Option_t*)
         ahCalTvsBar[side]->Fill(bar, data->GetTime());
         ahCalEvsBar[side]->Fill(bar, data->GetQdc());
         if (std::isnan(data->GetTriggerTime()))
-          {
+        {
             hNeuLANDvsStart->Fill(start, data->GetTime());
-          }
+        }
         else
-          {
-            hNeuLANDvsStart->Fill(start, data->GetTime()-data->GetTriggerTime());
-          }
-        
+        {
+            hNeuLANDvsStart->Fill(start, data->GetTime() - data->GetTriggerTime());
+        }
+
         for (const auto& datax : calData)
         {
             const auto sidex = datax->GetSide() - 1; // [1,2] -> [0,1]

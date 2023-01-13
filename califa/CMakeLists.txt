@@ -1,6 +1,6 @@
 ##############################################################################
 #   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    #
-#   Copyright (C) 2019 Members of R3B Collaboration                          #
+#   Copyright (C) 2019-2023 Members of R3B Collaboration                     #
 #                                                                            #
 #             This software is distributed under the terms of the            #
 #                 GNU General Public Licence (GPL) version 3,                #
@@ -57,12 +57,12 @@ set(SRCS
 ./pars/R3BCalifaMappingPar.cxx
 ./pars/R3BCalifaCrystalCalPar.cxx
 ./pars/R3BCalifaTotCalPar.cxx
-./pars/R3BCalifaHitPar.cxx
+./pars/R3BCalifaClusterPar.cxx
 ./pars/R3BCalifaCrystalPars4Sim.cxx
 ./calibration/R3BCalifaMapped2CrystalCalPar.cxx
 ./calibration/R3BCalifaCrystalCal2TotCalPar.cxx
 ./calibration/R3BCalifaMapped2CrystalCal.cxx
-./calibration/R3BCalifaCrystalCal2Hit.cxx
+./calibration/R3BCalifaCrystalCal2Cluster.cxx
 ./calibration/R3BCalifaCrystalCal2CrystalCalPID.cxx
 ./online/R3BCalifaOnlineSpectra.cxx
 ./online/R3BCalifaJulichOnlineSpectra.cxx
@@ -81,3 +81,6 @@ set(DEPENDENCIES
   Spectrum R3BBase R3BPassive R3BData R3BTracking Boost::regex)
 
 GENERATE_LIBRARY()
+
+add_subdirectory(geobase)
+add_subdirectory(test)

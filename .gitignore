@@ -51,11 +51,14 @@ macros/
 .cache
 .idea/
 .vscode/
+.DS_Store
 build-r3broot.sh
 cmake-build-debug/
-
+R3BParams_S522
 sofia/
 
 glad-tpc/
 
 frs/
+
+asyeos/

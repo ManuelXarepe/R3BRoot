@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -15,6 +15,8 @@
 #include "R3BNeulandCalData.h"
 #include "TF1.h"
 #include "TSpectrum.h"
+#include <FairRootManager.h>
+#include <TClonesArray.h>
 
 #include <fstream>
 #include <sstream>
@@ -124,7 +126,7 @@ InitStatus R3BNeulandGainMatching::Init()
 void R3BNeulandGainMatching::Exec(Option_t* option)
 {
 
-  Double_t maxhv = 1400;
+    Double_t maxhv = 1400;
     // check high voltage
 
     if (finished)
@@ -221,7 +223,8 @@ void R3BNeulandGainMatching::Exec(Option_t* option)
                 }
 
                 maxhv = 1400;
-                if (iPlane < 2) maxhv = 1800;
+                if (iPlane < 2)
+                    maxhv = 1800;
                 if (hv[iPlane][iBar][iSide] >= 0 && hv[iPlane][iBar][iSide] <= maxhv)
                 {
                     hventry.vtarget->Set(hv[iPlane][iBar][iSide]);
@@ -252,7 +255,8 @@ void R3BNeulandGainMatching::Exec(Option_t* option)
                 ealt[iPlane][iBar][iSide] = e;
                 std::cout << "new hv: " << hv[iPlane][iBar][iSide] << std::endl;
                 maxhv = 1400;
-                if (iPlane<2) maxhv = 1800;
+                if (iPlane < 2)
+                    maxhv = 1800;
                 if (hv[iPlane][iBar][iSide] >= 0 && hv[iPlane][iBar][iSide] <= maxhv)
                 {
                     hventry.vtarget->Set(hv[iPlane][iBar][iSide]);

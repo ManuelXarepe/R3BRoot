@@ -9,16 +9,16 @@
 #define __GUARD_H101_RPC_EXT_H101_RPC_H__
 
 #ifndef __CINT__
-# include <stdint.h>
+#include <stdint.h>
 #else
 /* For CINT (old version trouble with stdint.h): */
-# ifndef uint32_t
+#ifndef uint32_t
 typedef unsigned int uint32_t;
-typedef          int  int32_t;
-# endif
+typedef int int32_t;
+#endif
 #endif
 #ifndef EXT_STRUCT_CTRL
-# define EXT_STRUCT_CTRL(x)
+#define EXT_STRUCT_CTRL(x)
 #endif
 
 /********************************************************
@@ -492,5 +492,4 @@ typedef struct EXT_STR_h101_RPC_onion_t
   \
 } while (0);
 #endif/*__GUARD_H101_RPC_EXT_H101_RPC_H__*/
-
 /*******************************************************/

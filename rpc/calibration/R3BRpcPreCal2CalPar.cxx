@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -12,9 +12,9 @@
  ******************************************************************************/
 
 #include "TClonesArray.h"
+#include "TF1.h"
 #include "TObjArray.h"
 #include "TVector3.h"
-#include "TF1.h"
 
 #include "FairLogger.h"
 #include "FairRootManager.h"
@@ -50,11 +50,7 @@ R3BRpcPreCal2CalPar::R3BRpcPreCal2CalPar(const char* name, Int_t iVerbose)
     }
 }
 
-R3BRpcPreCal2CalPar::~R3BRpcPreCal2CalPar()
-{
-    LOG(INFO) << "R3BRpcPreCal2CalPar: Delete instance";
-
-}
+R3BRpcPreCal2CalPar::~R3BRpcPreCal2CalPar() { LOG(info) << "R3BRpcPreCal2CalPar: Delete instance"; }
 
 InitStatus R3BRpcPreCal2CalPar::Init()
 {
@@ -63,20 +59,20 @@ InitStatus R3BRpcPreCal2CalPar::Init()
     FairRootManager* rootManager = FairRootManager::Instance();
     if (!rootManager)
     {
-        LOG(ERROR) << "R3BRpcPreCal2CalPar::Init() FairRootManager not found";
+        LOG(error) << "R3BRpcPreCal2CalPar::Init() FairRootManager not found";
         return kFATAL;
     }
 
     fPreCalDataCA = (TClonesArray*)rootManager->GetObject("R3BRpcPreCalData");
     if (!fPreCalDataCA)
     {
-        LOG(ERROR) << "R3BRpcPreCal2CalPar::Init() fPreCalDataCA not found";
+        LOG(error) << "R3BRpcPreCal2CalPar::Init() fPreCalDataCA not found";
         return kFATAL;
     }
     FairRuntimeDb* rtdbPar = FairRuntimeDb::instance();
     if (!rtdbPar)
     {
-        LOG(ERROR) << "R3BRpcPreCal2CalPar::Init() FairRuntimeDb not found";
+        LOG(error) << "R3BRpcPreCal2CalPar::Init() FairRuntimeDb not found";
         return kFATAL;
     } 
     fR3BEventHeader = (R3BEventHeader*) rootManager->GetObject("EventHeader.");
@@ -91,7 +87,7 @@ InitStatus R3BRpcPreCal2CalPar::Init()
     fTotCalPar = (R3BRpcTotCalPar*)rtdbPar->getContainer("RpcTotCalPar");
     if (!fTotCalPar)
     {
-        LOG(ERROR) << "R3BRpcPreCal2CalPar::Init() Couldn't get handle on RpcTotCalPar container";
+        LOG(error) << "R3BRpcPreCal2CalPar::Init() Couldn't get handle on RpcTotCalPar container";
         return kFATAL;
     }
 
@@ -99,11 +95,7 @@ InitStatus R3BRpcPreCal2CalPar::Init()
     return kSUCCESS;
 }
 
-InitStatus R3BRpcPreCal2CalPar::ReInit()
-{
-
-    return kSUCCESS;
-}
+InitStatus R3BRpcPreCal2CalPar::ReInit() { return kSUCCESS; }
 
 void R3BRpcPreCal2CalPar::Exec(Option_t* opt)
 {
@@ -140,12 +132,11 @@ void R3BRpcPreCal2CalPar::Reset() {}
 
 void R3BRpcPreCal2CalPar::FinishEvent() {}
 
-Double_t fitf(Double_t *x, Double_t *par)
+Double_t fitf(Double_t* x, Double_t* par)
 {
-Double_t fitval = par[0] + par[1]*x[0];
-return fitval;
+    Double_t fitval = par[0] + par[1] * x[0];
+    return fitval;
 }
-
 
 void R3BRpcPreCal2CalPar::FinishTask() {
  for (int t = 0; t < N_NUM; t++)

@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -25,8 +25,8 @@ R3BNeulandCalData::R3BNeulandCalData(Int_t barId, Int_t side, Double_t time, Dou
 std::ostream& operator<<(std::ostream& os, const R3BNeulandCalData& calData)
 {
     os << "R3BNeulandCalData: BarID " << calData.GetBarId() << "    Side " << calData.GetSide() << "    Time "
-       << calData.GetTime() << "   Trigger time " << calData.GetTriggerTime() << "    QDC "
-       << calData.GetQdc() << std::endl;
+       << calData.GetTime() << "   Trigger time " << calData.GetTriggerTime() << "    QDC " << calData.GetQdc()
+       << std::endl;
     return os;
 }
 

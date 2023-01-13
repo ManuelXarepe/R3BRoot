@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -29,8 +29,8 @@
 #include "R3BLosMapped2TCal.h"
 #include "R3BEventHeader.h"
 #include "R3BLogger.h"
-#include "R3BLosTCalData.h"
 #include "R3BLosMappedData.h"
+#include "R3BLosTCalData.h"
 #include "R3BTCalEngine.h"
 #include "R3BTCalPar.h"
 
@@ -70,7 +70,7 @@ R3BLosMapped2TCal::R3BLosMapped2TCal(const char* name, Int_t iVerbose)
 
 R3BLosMapped2TCal::~R3BLosMapped2TCal()
 {
-    R3BLOG(DEBUG1, "Destructor");
+    R3BLOG(debug1, "Destructor");
     if (fTCalItems)
         delete fTCalItems;
     if (fTCalTriggerItems)
@@ -79,13 +79,13 @@ R3BLosMapped2TCal::~R3BLosMapped2TCal()
 
 InitStatus R3BLosMapped2TCal::Init()
 {
-    R3BLOG(INFO, "");
+    R3BLOG(info, "");
     // try to get a handle on the EventHeader. EventHeader may not be
     // present though and hence may be null. Take care when using.
     FairRootManager* mgr = FairRootManager::Instance();
     if (NULL == mgr)
     {
-        R3BLOG(FATAL, "FairRootManager not found");
+        R3BLOG(fatal, "FairRootManager not found");
         return kFATAL;
     }
 
@@ -97,13 +97,13 @@ InitStatus R3BLosMapped2TCal::Init()
     fMappedItems = (TClonesArray*)mgr->GetObject("LosMapped");
     if (NULL == fMappedItems)
     {
-        R3BLOG(FATAL, "LosMapped not found");
+        R3BLOG(fatal, "LosMapped not found");
         return kFATAL;
     }
 
     // get access to Trigger Mapped data
     fMappedTriggerItems = (TClonesArray*)mgr->GetObject("LosTriggerMapped");
-    R3BLOG_IF(WARNING, !fMappedTriggerItems, "LosTriggerMapped not found");
+    R3BLOG_IF(warn, !fMappedTriggerItems, "LosTriggerMapped not found");
 
     // Request storage of TCal data in output tree
     mgr->Register("LosTCal", "LosTCal data", fTCalItems, !fOnline);
@@ -124,7 +124,7 @@ void R3BLosMapped2TCal::SetParContainers()
     fTcalPar = (R3BTCalPar*)FairRuntimeDb::instance()->getContainer("LosTCalPar");
     if (!fTcalPar)
     {
-        R3BLOG(FATAL, "Could not get access to LosTCalPar-Container.");
+        R3BLOG(fatal, "Could not get access to LosTCalPar-Container.");
         fNofTcalPars = 0;
         return;
     }
@@ -148,7 +148,6 @@ void R3BLosMapped2TCal::Exec(Option_t* option)
     if (nHits == 0)
         return;
 
-
     for (Int_t ihit = 0; ihit < nHits; ihit++) // nHits = Nchannel_LOS * NTypes = 4 or 8 * 3
     {
         Double_t times_ns = 0. / 0.;
@@ -163,16 +162,15 @@ void R3BLosMapped2TCal::Exec(Option_t* option)
         UInt_t iCha = hit->GetChannel();  // 1..
         UInt_t iType = hit->GetType();    // 0,1,2,3
 
-
         if ((iDet < 1) || (iDet > fNofDetectors))
         {
-            R3BLOG(WARNING, "Detector number out of range: " << iDet);
+            R3BLOG(warn, "Detector number out of range: " << iDet);
             continue;
         }
 
         if (hit->GetTimeCoarse() > 8192)
         {
-            R3BLOG(WARNING, "Coarse counter > 8192: Det " << iDet << " , Ch: " << iCha << " , type: " << iType);
+            R3BLOG(warn, "Coarse counter > 8192: Det " << iDet << " , Ch: " << iCha << " , type: " << iType);
             continue;
         }
 
@@ -185,8 +183,7 @@ void R3BLosMapped2TCal::Exec(Option_t* option)
 
             if (!par)
             {
-                R3BLOG(WARNING,
-                       "Tcal par not found, Detector: " << iDet << ", Channel: " << iCha << ", Type: " << iType);
+                R3BLOG(warn, "Tcal par not found, Detector: " << iDet << ", Channel: " << iCha << ", Type: " << iType);
                 continue;
             }
 
@@ -197,7 +194,7 @@ void R3BLosMapped2TCal::Exec(Option_t* option)
             if (times_raw_ns < 0. || times_raw_ns > fClockFreq || IS_NAN(times_raw_ns))
             {
 
-                R3BLOG(WARNING,
+                R3BLOG(warn,
                        "Bad time in ns: det= " << iDet << ", ch= " << iCha << ", type= " << iType
                                                << ", time in channels = " << hit->GetTimeFine()
                                                << ", time in ns = " << times_raw_ns);
@@ -213,7 +210,7 @@ void R3BLosMapped2TCal::Exec(Option_t* option)
             times_ns = hit->GetTimeFine() / 7.8 / 1000.; // range MTDC 3->7.8ps
         }
 
-	AddTCalData(iDet, iCha, iType, times_ns);
+        AddTCalData(iDet, iCha, iType, times_ns);
         continue;
     }
 
@@ -232,7 +229,7 @@ void R3BLosMapped2TCal::Exec(Option_t* option)
             auto par = fTcalPar->GetModuleParAt(2 + iDetector, iChannel, iType);
             if (!par)
             {
-                R3BLOG(WARNING, "Trigger Tcal par not found.");
+                R3BLOG(warn, "Trigger Tcal par not found.");
                 continue;
             }
 
@@ -242,7 +239,7 @@ void R3BLosMapped2TCal::Exec(Option_t* option)
             if (time_ns > 0.)
             {
                 time_ns = (mapped->GetTimeCoarse() + 1) * fClockFreq - time_ns;
-		AddTriggerTCalData(iDetector, iChannel, iType - 1, time_ns);
+                AddTriggerTCalData(iDetector, iChannel, iType - 1, time_ns);
             }
         }
     }
@@ -264,18 +261,17 @@ void R3BLosMapped2TCal::FinishEvent()
 
 R3BLosTCalData* R3BLosMapped2TCal::AddTCalData(Int_t det, Int_t ch, Int_t typ, Double_t tns)
 {
-	    // It fills the R3BLosTcalData
-	    TClonesArray& clref = *fTCalItems;
-   	    Int_t size = clref.GetEntriesFast();
-	    return new (clref[size]) R3BLosTCalData(det, ch, typ, tns);
+    // It fills the R3BLosTcalData
+    TClonesArray& clref = *fTCalItems;
+    Int_t size = clref.GetEntriesFast();
+    return new (clref[size]) R3BLosTCalData(det, ch, typ, tns);
 }
-	    
 
 R3BLosTCalData* R3BLosMapped2TCal::AddTriggerTCalData(Int_t det, Int_t ch, Int_t typ, Double_t tns)
 {
-	    // It fills the R3BLosTriggerTcalData
-	    TClonesArray& clref = *fTCalTriggerItems;
-   	    Int_t size = clref.GetEntriesFast();
-	    return new (clref[size]) R3BLosTCalData(det, ch, typ, tns);
+    // It fills the R3BLosTriggerTcalData
+    TClonesArray& clref = *fTCalTriggerItems;
+    Int_t size = clref.GetEntriesFast();
+    return new (clref[size]) R3BLosTCalData(det, ch, typ, tns);
 }
 ClassImp(R3BLosMapped2TCal);

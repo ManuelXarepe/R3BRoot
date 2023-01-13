@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -26,7 +26,8 @@
  ** $unpacker --ntuple=STRUCT_HH,RAW:NN_P,id=h101_raw_nnp_tamex,NOTRIGEVENTNO,ext_h101_raw_nnp_tamex.h
  **/
 
-extern "C" {
+extern "C"
+{
 #include "ext_data_client.h"
 #include "ext_h101_raw_nnp_tamex.h"
 }
@@ -46,7 +47,7 @@ R3BNeulandTamexReader::R3BNeulandTamexReader(EXT_STR_h101_raw_nnp_tamex_onion* d
 
 R3BNeulandTamexReader::~R3BNeulandTamexReader()
 {
-    R3BLOG(DEBUG1, "");
+    R3BLOG(debug1, "");
     if (fArray)
     {
         delete fArray;
@@ -60,16 +61,16 @@ R3BNeulandTamexReader::~R3BNeulandTamexReader()
 Bool_t R3BNeulandTamexReader::Init(ext_data_struct_info* a_struct_info)
 {
     Int_t ok;
-    R3BLOG(INFO, "");
+    R3BLOG(info, "");
     EXT_STR_h101_raw_nnp_tamex_ITEMS_INFO(ok, *a_struct_info, fOffset, EXT_STR_h101_raw_nnp_tamex, 0);
 
     if (!ok)
     {
-        R3BLOG(ERROR, "Failed to setup structure information.");
+        R3BLOG(error, "Failed to setup structure information.");
         return kFALSE;
     }
 
-    R3BLOG(INFO, "Number of planes " << fNofPlanes);
+    R3BLOG(info, "Number of planes " << fNofPlanes);
 
     // Register output arrays in tree
     FairRootManager::Instance()->Register("NeulandMappedData", "Neuland", fArray, !fOnline);

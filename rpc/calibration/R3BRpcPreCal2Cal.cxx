@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -29,7 +29,6 @@
 
 #include "R3BRpcPreCalData.h"
 
-
 // R3BRpcPreCal2Cal: Constructor
 R3BRpcPreCal2Cal::R3BRpcPreCal2Cal()
     : FairTask("R3B RPC Calibrator")
@@ -45,47 +44,46 @@ R3BRpcPreCal2Cal::R3BRpcPreCal2Cal()
 
 R3BRpcPreCal2Cal::~R3BRpcPreCal2Cal()
 {
-    LOG(INFO) << "R3BRpcPreCal2Cal: Delete instance";
+    LOG(info) << "R3BRpcPreCal2Cal: Delete instance";
 
     delete fTotCalPar;
 }
 
-
 InitStatus R3BRpcPreCal2Cal::Init()
 {
-    LOG(INFO) << "R3BRpcPreCal2Cal::Init()";
+    LOG(info) << "R3BRpcPreCal2Cal::Init()";
 
     // INPUT DATA
     FairRootManager* rootManager = FairRootManager::Instance();
     if (!rootManager)
     {
-        LOG(FATAL) << "R3BRpcPreCal2Cal::FairRootManager not found";
+        LOG(fatal) << "R3BRpcPreCal2Cal::FairRootManager not found";
         return kFATAL;
     }
 
     // Parameter Container
     // Reading RPCCalPar from FairRuntimeDb
-   FairRuntimeDb* rtdb = FairRuntimeDb::instance();
+    FairRuntimeDb* rtdb = FairRuntimeDb::instance();
     if (!rtdb)
     {
-        LOG(ERROR) << "R3BRpcPreCal2Cal:: FairRuntimeDb not opened";
+        LOG(error) << "R3BRpcPreCal2Cal:: FairRuntimeDb not opened";
     }
 
     fPreCalDataCA = (TClonesArray*)rootManager->GetObject("R3BRpcPreCalData");
     if (!fPreCalDataCA)
     {
-        LOG(ERROR) << "R3BRpcPreCal2CalPar::Init() fPreCalDataCA not found";
+        LOG(error) << "R3BRpcPreCal2CalPar::Init() fPreCalDataCA not found";
         return kFATAL;
     }
 
     fTotCalPar = (R3BRpcTotCalPar*)rtdb->getContainer("RpcTotCalPar");
     if (!fTotCalPar)
     {
-        LOG(ERROR) << "R3BRpcPreCal2CalPar::Init() Couldn't get handle on RpcTotCalPar container";
+        LOG(error) << "R3BRpcPreCal2CalPar::Init() Couldn't get handle on RpcTotCalPar container";
         return kFATAL;
     }
 
-    //fill the TArray with Tot parameters!!!
+    // fill the TArray with Tot parameters!!!
     fParCont = fTotCalPar->GetCalParams();
 
     // OUTPUT DATA
@@ -96,18 +94,14 @@ InitStatus R3BRpcPreCal2Cal::Init()
     return kSUCCESS;
 }
 
-InitStatus R3BRpcPreCal2Cal::ReInit()
-{
-
-    return kSUCCESS;
-}
+InitStatus R3BRpcPreCal2Cal::ReInit() { return kSUCCESS; }
 
 void R3BRpcPreCal2Cal::Exec(Option_t* option)
 {
     // Reset entries in output arrays, local arrays
     Reset();
 
-    //loop over strip data
+    // loop over strip data
     double time_R_B;
     double time_L_T;
     double tot_R_B;
@@ -167,12 +161,11 @@ void R3BRpcPreCal2Cal::Finish() {}
 
 void R3BRpcPreCal2Cal::Reset()
 {
-    LOG(DEBUG) << "Clearing RPCTotCalData Structure";
-    if (fRpcCalDataCA){
+    LOG(debug) << "Clearing RPCTotCalData Structure";
+    if (fRpcCalDataCA)
+    {
         fRpcCalDataCA->Clear();
     }
 }
 
-
 ClassImp(R3BRpcPreCal2Cal)
-                                         

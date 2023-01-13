@@ -2,7 +2,7 @@
 
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -20,6 +20,7 @@
 #pragma link off all functions;
 
 #pragma link C++ class R3BAlpide+;
+#pragma link C++ class R3BAlpideDigitizer+;
 
 #pragma link C++ class R3BAlpideContFact+;
 #pragma link C++ class R3BAlpideMappingPar+;
@@ -31,6 +32,7 @@
 #pragma link C++ class R3BAlpideCal2Hit+;
 
 #pragma link C++ class R3BAlpideOnlineSpectra+;
+#pragma link C++ class R3BSingleAlpideCorrelationOnlineSpectra+;
 
 #endif
 

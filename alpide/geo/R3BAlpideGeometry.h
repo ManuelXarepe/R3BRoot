@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -25,6 +25,7 @@
 
 class TVector3;
 class TGeoNavigator;
+class TRotation;
 
 /**
  * Geometrical queries to ALPIDE device
@@ -46,10 +47,24 @@ class R3BAlpideGeometry : public TObject
 
     /**
      * Gets position in polar coordinates of sensor with given ID.
-     * On error, the x,y and z component of the TVector3 are set to NAN.
+     * On error, the x, y and z components of the TVector3 are set to NAN.
      * @param iD sensor ID (depending on geometry version)
      */
     const TVector3& GetAngles(Int_t iD);
+
+    /**
+     * Gets rotation matrix of sensor with given ID.
+     * In case of error, it returns the identity matrix
+     * @param iD sensor ID (depending on geometry version)
+     */
+    const TRotation GetRotation(Int_t iD);
+
+    /**
+     * Gets position of sensor with given ID.
+     * On error, the x, y and z components of the TVector3 are set to NAN.
+     * @param iD sensor ID (depending on geometry version)
+     */
+    const TVector3& GetTranslation(Int_t iD);
 
     /**
      * Legacy: Gets position in polar coordinates of sensor with given ID.
@@ -104,7 +119,6 @@ class R3BAlpideGeometry : public TObject
   private:
     Int_t fGeometryVersion;
     Int_t fNbSensor;
-    Int_t fNbCyl;
     Bool_t fIsSimulation;
     Bool_t IsInitialize;
     TFile* f;

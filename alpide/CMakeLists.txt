@@ -1,7 +1,7 @@
 
 ##############################################################################
 #   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    #
-#   Copyright (C) 2019 Members of R3B Collaboration                          #
+#   Copyright (C) 2019-2023 Members of R3B Collaboration                     #
 #                                                                            #
 #             This software is distributed under the terms of the            #
 #                 GNU General Public Licence (GPL) version 3,                #
@@ -31,24 +31,25 @@ ${R3BROOT_SOURCE_DIR}/r3bdata/alpideData
 ${R3BROOT_SOURCE_DIR}/passive
 ${R3BROOT_SOURCE_DIR}/alpide
 ${R3BROOT_SOURCE_DIR}/alpide/sim
+${R3BROOT_SOURCE_DIR}/alpide/digi
 ${R3BROOT_SOURCE_DIR}/alpide/geo
 ${R3BROOT_SOURCE_DIR}/alpide/pars
 ${R3BROOT_SOURCE_DIR}/alpide/calibration
 ${R3BROOT_SOURCE_DIR}/alpide/online
 )
 
-include_directories( ${INCLUDE_DIRECTORIES})
-include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
-
 set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
 ${FAIRROOT_LIBRARY_DIR}
 ) 
 
+include_directories( ${INCLUDE_DIRECTORIES})
+include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
 link_directories( ${LINK_DIRECTORIES})
 
 file(GLOB SRCS 
 ./sim/*.cxx 
+./digi/*.cxx 
 ./geo/*.cxx 
 ./pars/*.cxx 
 ./calibration/*.cxx
@@ -66,3 +67,4 @@ set(DEPENDENCIES
 
 GENERATE_LIBRARY()
 
+add_subdirectory(test)

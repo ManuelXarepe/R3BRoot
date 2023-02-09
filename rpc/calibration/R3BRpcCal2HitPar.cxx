@@ -76,43 +76,6 @@ void R3BRpcCal2HitPar::SetParameter() {}
 
 InitStatus R3BRpcCal2HitPar::Init()
 {
-<<<<<<< HEAD
-    LOG(info) << "R3BRpcCal2HitPar::Init()";
-
-    FairRootManager* rootManager = FairRootManager::Instance();
-    if (!rootManager)
-    {
-        LOG(error) << "R3BRpcCal2HitPar::Init() FairRootManager not found";
-        return kFATAL;
-    }
-
-    fCalDataCA = dynamic_cast<TClonesArray*>(rootManager->GetObject("R3BRpcCalData"));
-    if (!fCalDataCA)
-    {
-        LOG(error) << "R3BRpcCal2HitPar::Init() R3BRpcCalData not found";
-        return kFATAL;
-    }
-
-    FairRuntimeDb* rtdb = FairRuntimeDb::instance();
-    if (!rtdb)
-    {
-        LOG(error) << "R3BRpcCal2HitPar::Init() FairRuntimeDb not found";
-        return kFATAL;
-    }
-
-    fHitPar = dynamic_cast<R3BRpcHitPar*>(rtdb->getContainer("RpcHitPar"));
-    if (!fHitPar)
-
-    {
-        LOG(error) << "R3BRpcCal2HitPar::Init() Couldn't get handle on RPCHitPar container";
-        return kFATAL;
-    }
-
-    // Set container with mapping parameters
-    SetParameter();
-
-    return kSUCCESS;
-=======
  LOG(INFO) << "R3BRpcCal2HitPar::Init()";
 
  FairRootManager* rootManager = FairRootManager::Instance();
@@ -155,7 +118,6 @@ InitStatus R3BRpcCal2HitPar::Init()
  SetParameter();
 
  return kSUCCESS;
->>>>>>> changing rpc position calc
 }
 
 InitStatus R3BRpcCal2HitPar::ReInit()

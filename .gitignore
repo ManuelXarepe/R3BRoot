@@ -53,6 +53,7 @@ geometry/neuland_v*.root
 geometry/*.geo.root
 build*/
 input/
+field/magField/R3B/*.root
 
 .cache
 .idea/

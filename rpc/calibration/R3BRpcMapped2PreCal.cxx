@@ -197,26 +197,22 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
     nHits = fMappedDataCA->GetEntries();
     for (Int_t i = 0; i < nHits; i++)
     {
-
         auto map1 = dynamic_cast<R3BRpcMappedData*>(fMappedDataCA->At(i));
         UInt_t iDetector = map1->GetDetId();
         UInt_t iFpga;
-    if(map1->GetChannelId() == 7 ){
+        if(map1->GetChannelId() == 7 ){
             iFpga = 5;
         }
         else {
             iFpga = map1->GetChannelId();   // now 1..4
         }
-       
         R3BTCalModulePar* par_Refs = fTCalPar->GetModuleParAt(iDetector+1,iFpga,0+1);
-    if(iDetector == 2){
-          TClonesArray& clref = *fRpcPreCalDataCA;
-      Int_t size = clref.GetEntriesFast();
-        new (clref[size]) R3BRpcPreCalData(2,map1->GetChannelId(),par_Refs->GetTimeVFTX(map1->GetFineTime()) , 0, 0);
-    }
-
+        if(iDetector == 2){
+         TClonesArray& clref = *fRpcPreCalDataCA;
+         Int_t size = clref.GetEntriesFast();
+         new (clref[size]) R3BRpcPreCalData(2,map1->GetChannelId(),Ref_vec[map1->GetChannelId()-1].time , 0, 0);
+        }
         // loop over strip data
-
         if (iDetector == 0)
         {
             UInt_t iStrip = map1->GetChannelId();                      // now 1..41
@@ -243,9 +239,7 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
             Entry entry;
             entry.time =
                 fmod((5. * map1->GetCoarseTime() - times_Strip - Ref_vec[lut[iStrip - 1][map1->GetSide()][0]].time -
-                      (Ref_vec[8].time - Ref_vec[6].time) + 4 * c + c / 2),
-                     c) -
-                c / 2;
+                     (Ref_vec[8].time - Ref_vec[6].time) + 4 * c + c / 2),c) - c / 2;
             entry.Mapped = map1;
             strip_vec[map1->GetChannelId() - 1][map1->GetSide()][map1->GetEdge()].push_back(entry);
         }
@@ -254,7 +248,6 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
 
         if (iDetector == 1)
         {
-
             UInt_t iPmt = map1->GetChannelId();                        // now 1..41
             UInt_t iEdge_Side = map1->GetEdge() * 2 + map1->GetSide(); // 0,3
             R3BTCalModulePar* par_Pmts = fTCalPar->GetModuleParAt(iDetector + 1, iPmt, iEdge_Side + 1);

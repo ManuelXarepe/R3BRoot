@@ -31,6 +31,7 @@
 #pragma link C++ class R3BCalifaDigitizer+;
 
 #pragma link C++ class R3BCalifaMapped2CrystalCal+;
+#pragma link C++ class R3BCalifaMapped2SuperCal+;
 #pragma link C++ class R3BCalifaMapped2CrystalCalPar+;
 #pragma link C++ class R3BCalifaCrystalCal2TotCalPar+;
 #pragma link C++ class R3BCalifaCrystalCal2Cluster+;

@@ -68,7 +68,7 @@ void R3BRpcCal2HitPar::SetParContainers()
  FairRuntimeDb* rtdb = FairRuntimeDb::instance();
  if (!rtdb)
  {
-     LOG(ERROR) << "FairRuntimeDb not opened!";
+     LOG(error) << "FairRuntimeDb not opened!";
  }
 }
 
@@ -76,33 +76,33 @@ void R3BRpcCal2HitPar::SetParameter() {}
 
 InitStatus R3BRpcCal2HitPar::Init()
 {
- LOG(INFO) << "R3BRpcCal2HitPar::Init()";
+ LOG(info) << "R3BRpcCal2HitPar::Init()";
 
  FairRootManager* rootManager = FairRootManager::Instance();
  if (!rootManager)
  {
-     LOG(ERROR) << "R3BRpcCal2HitPar::Init() FairRootManager not found";
+     LOG(error) << "R3BRpcCal2HitPar::Init() FairRootManager not found";
      return kFATAL;
  }
 
  fCalDataCA = (TClonesArray*)rootManager->GetObject("R3BRpcCalData");
  if (!fCalDataCA)
  {
-     LOG(ERROR) << "R3BRpcCal2HitPar::Init() R3BRpcCalData not found";
+     LOG(error) << "R3BRpcCal2HitPar::Init() R3BRpcCalData not found";
      return kFATAL;
  }
 
  fR3BEventHeader = (R3BEventHeader*)rootManager->GetObject("EventHeader.");
  if (!fR3BEventHeader)
  {
-     LOG(ERROR) << "R3BRpcCal2HitPar::Init() EventHeader. not found";
+     LOG(error) << "R3BRpcCal2HitPar::Init() EventHeader. not found";
      return kFATAL;
  }
 
  FairRuntimeDb* rtdb = FairRuntimeDb::instance();
  if (!rtdb)
  {
-     LOG(ERROR) << "R3BRpcCal2HitPar::Init() FairRuntimeDb not found";
+     LOG(error) << "R3BRpcCal2HitPar::Init() FairRuntimeDb not found";
      return kFATAL;
  }
 
@@ -110,7 +110,7 @@ InitStatus R3BRpcCal2HitPar::Init()
  if (!fHitPar)
 
  {
-     LOG(ERROR) << "R3BRpcCal2HitPar::Init() Couldn't get handle on RPCHitPar container";
+     LOG(error) << "R3BRpcCal2HitPar::Init() Couldn't get handle on RPCHitPar container";
      return kFATAL;
  }
 
@@ -140,9 +140,9 @@ void R3BRpcCal2HitPar::Exec(Option_t* opt)
  double time_scint = 0;
  bool rpc_hit=false;
  bool scint_hit=false;
- bool tpat1 = fR3BEventHeader->GetTpat() & 0x0fff;
+ bool tpat1 = fR3BEventHeader->GetTpat() & 0xf000;
+ bool tpat2 = fR3BEventHeader->GetTpat() & 0x0fff;
  UInt_t inum=0 ;
- if (tpat1>0){ 
   for (Int_t i = 0; i < nHits; i++){
    auto map1 = (R3BRpcCalData*)(fCalDataCA->At(i));
    iDetector=map1->GetDetId();
@@ -150,27 +150,31 @@ void R3BRpcCal2HitPar::Exec(Option_t* opt)
    if(iDetector==0){
     time_rpc = (map1->GetTimeR_B()+map1->GetTimeL_T())/2.;
     chn_rpc = map1->GetChannelId();
-    pos_rpc = (map1->GetTimeL_T() - map1->GetTimeR_B())/2.;
+    pos_rpc = (map1->GetTimeL_T() - map1->GetTimeR_B());
     rpc_hit = true;
-    if (NULL == fhPos[inum]){
-     char strName[255];
-     char strName_par[255];
-     sprintf(strName, "%s_poscaldata_%d", fHitPar->GetName(),inum);
-     sprintf(strName_par, "%s_parcaldata_%d", fHitPar->GetName(),inum);
-     fhPos[inum] = new TH1F(strName, "", 4000,-2000.,2000.);
-     fhPar[inum] = new TH1F(strName_par, "", 4000,0.,4000.);
+    if (tpat1>0){ 
+     if (NULL == fhPos[inum]){
+      char strName[255];
+      char strName_par[255];
+      sprintf(strName, "%s_poscaldata_%d", fHitPar->GetName(),inum);
+      sprintf(strName_par, "%s_parcaldata_%d", fHitPar->GetName(),inum);
+      fhPos[inum] = new TH1F(strName, "", 4000,-2000.,2000.);
+      fhPar[inum] = new TH1F(strName_par, "", 4000,0.,4000.);
+     }
+     fhPos[inum]->Fill(pos_rpc*CSTRIP/2.);
     }
-    if (NULL == fhTime[inum]){
-     char strName[255];
-     sprintf(strName, "%s_timecaldata_%d", fHitPar->GetName(),inum);
-     fhTime[inum] = new TH1F(strName, "", 500,-40,-15);
+    if (tpat2>0){ 
+     if (NULL == fhTime[inum]){
+      char strName[255];
+      sprintf(strName, "%s_timecaldata_%d", fHitPar->GetName(),inum);
+      fhTime[inum] = new TH1F(strName, "", 500,-40,-15);
+     }
     } 
-    fhPos[inum]->Fill(pos_rpc*CSTRIP/2.);
    }
-   if(iDetector==1){
+   if(iDetector==1 && tpat2>0){
     time_scint = (map1->GetTimeR_B()+map1->GetTimeL_T())/2.;
     chn_scint = map1->GetChannelId();
-    pos_scint = (map1->GetTimeL_T() - map1->GetTimeR_B())/2.;
+    pos_scint = (map1->GetTimeL_T() - map1->GetTimeR_B());
     if(chn_scint == 1){
      scint_hit = true;
     }
@@ -185,7 +189,6 @@ void R3BRpcCal2HitPar::Exec(Option_t* opt)
   if(rpc_hit && scint_hit){
    fhTime[chn_rpc -1]->Fill(time_rpc-time_scint);
   }
- }
  return;
 }
 
@@ -194,12 +197,14 @@ void R3BRpcCal2HitPar::Reset() {}
 void R3BRpcCal2HitPar::FinishEvent() {}
 
 void R3BRpcCal2HitPar::FinishTask() {
+
  CalculateParsPosStrip();
  CalculateParsTimeStrip();
  fHitPar->setChanged();
  fHitPar->printParams();
  fHitPar->Write();
 }
+
 void R3BRpcCal2HitPar::CalculateParsPosStrip(){
  for (int t = 0; t < N_STRIP_NB; t++){
   if (NULL == fhPos[t] || t>=41 || NULL == fhPar[t]){continue;}
@@ -209,9 +214,10 @@ void R3BRpcCal2HitPar::CalculateParsPosStrip(){
    fhPar[t]->Fill(i,sum);
   }
   fhPar[t]->Scale(fhPar[t]->GetXaxis()->GetBinWidth(1)/(sum));
-  fHitPar->SetCalParams1(fhPar[t]->FindFirstBinAbove(0.01,1),t);
+  fHitPar->SetCalParams1(fhPar[t]->FindFirstBinAbove(0.008,1),t);
  }
 }
+
 void R3BRpcCal2HitPar::CalculateParsTimeStrip(){
  for (int t = 0; t < 41; t++){
   if (NULL == fhTime[t]){continue;}

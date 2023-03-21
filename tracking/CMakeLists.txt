@@ -34,6 +34,8 @@ ${R3BROOT_SOURCE_DIR}/r3bdata/mwpcData
 ${R3BROOT_SOURCE_DIR}/r3bdata/frsData
 ${R3BROOT_SOURCE_DIR}/r3bdata/musicData
 ${R3BROOT_SOURCE_DIR}/r3bdata/losData
+${R3BROOT_SOURCE_DIR}/r3bdata/footData
+${R3BROOT_SOURCE_DIR}/r3bdata/rpcData
 )
 
 include_directories( ${INCLUDE_DIRECTORIES})
@@ -57,6 +59,7 @@ R3BTrackingParticle.cxx
 R3BTrackingSetup.cxx
 R3BMDFWrapper.cxx
 R3BTrackingS515.cxx
+R3BTrackingS522.cxx
 )
 
 # fill list of header files from list of source files

@@ -21,7 +21,7 @@
 #include "R3BFootHitData.h"
 #include "R3BTofdHitData.h"
 #include "R3BMDFWrapper.h"
-#include "R3BTrack.h"
+#include "R3BRpcTrack.h"
 #include "TCanvas.h"
 #include "TClonesArray.h"
 #include "TMath.h"
@@ -258,7 +258,6 @@ class R3BTrackingS522 : public FairTask
     Int_t Tpat={};
     Double_t PoQ[N_glob_tracks_max]={};
     Double_t FlightPath[N_glob_tracks_max]={};
-    Double_t ToF[N_glob_tracks_max]={};
     Double_t TX0[N_glob_tracks_max]={};
     Double_t TY0[N_glob_tracks_max]={};
     Double_t Beta[N_glob_tracks_max]={};
@@ -312,7 +311,7 @@ class R3BTrackingS522 : public FairTask
     const Double_t AMU = 0.9314940038;          // GeV/c2
 
     // Private method to fill output track data
-    R3BTrack* AddTrackData(TVector3 mw, TVector3 poq, Double_t charge, Double_t aoz);
+    R3BRpcTrack* AddTrackData(TVector3 mw, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath);
 
   public:
     ClassDef(R3BTrackingS522, 1)

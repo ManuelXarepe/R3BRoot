@@ -24,7 +24,7 @@
 
 #include "R3BMCTrack.h"
 #include "R3BMDFWrapper.h"
-#include "R3BTrack.h"
+#include "R3BRpcTrack.h"
 
 #include "FairLogger.h"
 #include "FairRootManager.h"
@@ -68,7 +68,7 @@ R3BTrackingS522::R3BTrackingS522(const char* name, Int_t iVerbose)
     , fNEvents(0)
     , maxevent(0)
     , DoAlignment(false)
-    , fTrackItems(new TClonesArray("R3BTrack"))
+    , fTrackItems(new TClonesArray("R3BRpcTrack"))
     , reference_PoQ(0.)
     , GladCurrent(-1)
     , GladReferenceCurrent(-1)
@@ -107,11 +107,8 @@ InitStatus R3BTrackingS522::Init()
   {
       R3BLOG(fatal, Form("\n\n Cannot find tree branch %s \n\n", fDetectorNames[det]));
   }
-//  mgr->Register(Form("%s", fDetectorNames[det]), char(det).c_str(), fDataItems[det], true);
+  mgr->Register(Form("%s", fDetectorNames[det]), std::to_string(det).c_str(), fDataItems[det], true);
  }
- // Register output array
- TClonesArray* fRpcHitDataCA = new TClonesArray("R3BRpcHitData");
- mgr->Register("R3BRpcHitData", "RPC Strip Hit", fRpcHitDataCA, true);
 
  // check if all cuts are properly set
  if (GladCurrent < 0 || GladReferenceCurrent < 0 || 
@@ -152,7 +149,6 @@ InitStatus R3BTrackingS522::Init()
  tree_out.Branch("Tpat"         , &Tpat          , "Tpat/I");
  tree_out.Branch("PoQ"          , PoQ            , "PoQ[N_glob_tracks]/D");
  tree_out.Branch("FlightPath"   , FlightPath     , "FlightPath[N_glob_tracks]/D");
- tree_out.Branch("ToF"          , ToF            , "ToF[N_glob_tracks]/D");
  tree_out.Branch("TX0"          , TX0            , "TX0[N_glob_tracks]/D");
  tree_out.Branch("TY0"          , TY0            , "TY0[N_glob_tracks]/D");
  tree_out.Branch("Beta"         , Beta           , "Beta[N_glob_tracks]/D");
@@ -331,6 +327,12 @@ void R3BTrackingS522::Exec(Option_t* option){
    tofd_Q[N_glob_tracks] = tofd_hit->GetEloss();
    N_glob_tracks++;
 
+   TVector3 rpc(rpc_X[N_glob_tracks], rpc_Y[N_glob_tracks], rpc_Z[N_glob_tracks]);
+   TVector3 vec_PoQ(TX0[N_glob_tracks], TY0[N_glob_tracks], 1);
+   vec_PoQ.SetMag(PoQ[N_glob_tracks]);
+
+   AddTrackData(rpc, TX0[N_glob_tracks], TY0[N_glob_tracks], vec_PoQ, Beta[N_glob_tracks],  Gamma[N_glob_tracks],  FlightPath[N_glob_tracks]);
+
    if(N_glob_tracks == N_glob_tracks_max) return;
   }
  }
@@ -404,12 +406,12 @@ bool R3BTrackingS522::MakeOutgoingTracks(){
  for (auto i=0; i<fDataItems[DET_RPC]->GetEntriesFast(); ++i){
   auto rpc_hit = static_cast<R3BRpcHitData*>(fDataItems[DET_RPC]->At(i));
   if(rpc_hit->GetDetId()!=0) continue;
-  rpc_point.SetXYZ(rpc_hit->GetPos()*0.1,rpc_hit->GetChannelId()*3., 0); //cm
+  rpc_point.SetXYZ(rpc_hit->GetPos()*0.1,rpc_hit->GetChannelId()*3. - 21.*3., 0); //cm
   TransformPoint(rpc_point, &rpc_angles, &rpc_position);
   tr.rpc_x = rpc_point.X();
   tr.rpc_y = rpc_point.Y();
   tr.rpc_z = rpc_point.Z();
-  tr.rpc_tof = (rpc_hit->GetTof() + 42. + 21.2893);
+  tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 21.2893);
   N_out_tracks++;
   tracks_out.push_back(tr);
  }
@@ -511,12 +513,12 @@ void R3BTrackingS522::TransformPoint1(TVector3& point1, TVector3 rot1, TVector3 
  return;
 }
 
-R3BTrack* R3BTrackingS522::AddTrackData(TVector3 mw, TVector3 poq, Double_t charge, Double_t aoz)
+R3BRpcTrack* R3BTrackingS522::AddTrackData(TVector3 mw, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath)
 {
  // Filling output track info
  TClonesArray& clref = *fTrackItems;
  Int_t size = clref.GetEntriesFast();
- return new (clref[size]) R3BTrack(mw.X(), mw.Y(), mw.Z(), poq.X(), poq.Y(), poq.Z(), charge, aoz, 0., 0., 0);
+ return new (clref[size]) R3BRpcTrack(mw.X(), mw.Y(), mw.Z(), TX, TY, poq.X(), poq.Y(), poq.Z(), beta, gamma, flightPath);
 }
 
 // Setup energy cuts in foot and fibers 

@@ -199,6 +199,7 @@ rpcData/R3BRpcPreCalData.cxx
 rpcData/R3BRpcCalData.cxx
 rpcData/R3BRpcHitData.cxx
 rpcData/R3BRpcPoint.cxx
+rpcData/R3BRpcTrack.cxx
 mwpcData/R3BMwpcPoint.cxx
 mwpcData/R3BMwpcMappedData.cxx
 mwpcData/R3BMwpcCalData.cxx

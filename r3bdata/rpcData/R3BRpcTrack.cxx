@@ -22,6 +22,8 @@ R3BRpcTrack::R3BRpcTrack()
     : fX(0.)
     , fY(0.)
     , fZ(0.)
+    , fdx(0.)
+    , fdy(0.)
     , fTX(0.)
     , fTY(0.)
     , fPx(0.)
@@ -36,6 +38,8 @@ R3BRpcTrack::R3BRpcTrack()
 R3BRpcTrack::R3BRpcTrack(Double_t x,
                    Double_t y,
                    Double_t z,
+                   Double_t dx,
+                   Double_t dy,
                    Double_t TX,
                    Double_t TY,
                    Double_t px,
@@ -47,8 +51,10 @@ R3BRpcTrack::R3BRpcTrack(Double_t x,
     : fX(x)
     , fY(y)
     , fZ(z)
-    , fTX(px)
-    , fTY(px)
+    , fdx(dx)
+    , fdy(dy)
+    , fTX(TX)
+    , fTY(TY)
     , fPx(px)
     , fPy(py)
     , fPz(pz)

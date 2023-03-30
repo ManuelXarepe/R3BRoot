@@ -107,7 +107,7 @@ InitStatus R3BTrackingS522::Init()
   {
       R3BLOG(fatal, Form("\n\n Cannot find tree branch %s \n\n", fDetectorNames[det]));
   }
-  mgr->Register(Form("%s", fDetectorNames[det]), std::to_string(det).c_str(), fDataItems[det], true);
+  //mgr->Register(Form("%s", fDetectorNames[det]), std::to_string(det).c_str(), fDataItems[det], true);
  }
 
  // check if all cuts are properly set
@@ -273,10 +273,12 @@ void R3BTrackingS522::Exec(Option_t* option){
   align_data.f2.SetXYZ(0, f2_point_i.Y(), f2_point_i.Z());
   det_points_vec.push_back(align_data);
  }
- double a=0,b=0;
+ double a=0,b=0,c=0;
  double delta_TY0, delta_TX0;
+ cout << "new event" << endl;
  for (auto & tin : tracks_in){
 	 a++;
+	 b=0;
   for (auto & tout : tracks_out){
 	  b++;
    //preserve the order, it is expected by the MDF function!
@@ -288,6 +290,7 @@ void R3BTrackingS522::Exec(Option_t* option){
    mdf_data[5] = tout.rpc_y;
    mdf_data[6] = tout.rpc_z;
    mdf_data[7] = tout.rpc_tof;
+
    // Calculate all required MDF values
  
    TVector3 vertex_foot;//projection to the center of the target (0,0,0)
@@ -298,13 +301,20 @@ void R3BTrackingS522::Exec(Option_t* option){
 
    double dx = vertex_foot.X() - tin.vertex_mwpc_X;
    double dy = vertex_foot.Y() - tin.vertex_mwpc_Y;
-   if(dy <-3. || dy>-1.){continue;}
+   cout << " delta : " << dx << " " << dy << endl;
+   cout << " counters : " << a << " " << b << " " << c << endl;
+   cout << " Foot : "  << tin.f2_y << " " << tin.f2_z << " " << tin.f1_x << " " << tin.f1_z << endl;
+   cout << " RPC : " << tout.rpc_x << " " << tout.rpc_y << " " << tout.rpc_z << " " << tout.rpc_tof << endl;
+   cout << " vertex_foot : "  <<  vertex_foot.X() << " " << vertex_foot.Y() << endl;
+   cout << " vertex_mwpc : "  <<  tin.vertex_mwpc_X << " " << tin.vertex_mwpc_Y << endl;
+//   if(dy <-3. || dy>-1.){continue;}
+   c++;
    vertex_mwpc_X[N_glob_tracks] = tin.vertex_mwpc_X;
    vertex_mwpc_Y[N_glob_tracks] = tin.vertex_mwpc_Y;
    vertex_foot_X[N_glob_tracks] = vertex_foot.X();
    vertex_foot_Y[N_glob_tracks] = vertex_foot.Y();
-   dx_vertex[N_glob_tracks] = vertex_foot.X() - tin.vertex_mwpc_X;
-   dy_vertex[N_glob_tracks] = vertex_foot.Y() - tin.vertex_mwpc_Y;
+   dx_vertex[N_glob_tracks] = dx;
+   dy_vertex[N_glob_tracks] = dy;
 
    PoQ[N_glob_tracks] = MDF_PoQ->MDF(mdf_data) * GladCurrent / GladReferenceCurrent;
    FlightPath[N_glob_tracks] = MDF_FlightPath->MDF(mdf_data);
@@ -331,7 +341,8 @@ void R3BTrackingS522::Exec(Option_t* option){
    TVector3 vec_PoQ(TX0[N_glob_tracks], TY0[N_glob_tracks], 1);
    vec_PoQ.SetMag(PoQ[N_glob_tracks]);
 
-   AddTrackData(rpc, TX0[N_glob_tracks], TY0[N_glob_tracks], vec_PoQ, Beta[N_glob_tracks],  Gamma[N_glob_tracks],  FlightPath[N_glob_tracks]);
+
+   AddTrackData(rpc,dx,dy, TX0[N_glob_tracks], TY0[N_glob_tracks], vec_PoQ, Beta[N_glob_tracks],  Gamma[N_glob_tracks],  FlightPath[N_glob_tracks]);
 
    if(N_glob_tracks == N_glob_tracks_max) return;
   }
@@ -350,7 +361,7 @@ void R3BTrackingS522::FinishEvent()
  f2_hits.clear();
  tracks_in.clear();
  tracks_out.clear();
- tree_out.Fill();
+ if(good_ev==1){tree_out.Fill();}
 }
 
 void R3BTrackingS522::FinishTask()
@@ -411,7 +422,8 @@ bool R3BTrackingS522::MakeOutgoingTracks(){
   tr.rpc_x = rpc_point.X();
   tr.rpc_y = rpc_point.Y();
   tr.rpc_z = rpc_point.Z();
-  tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 21.2893);
+  tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 22.8272);
+  //tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 21.2893);
   N_out_tracks++;
   tracks_out.push_back(tr);
  }
@@ -447,6 +459,7 @@ bool R3BTrackingS522::MakeIncomingTracks()
  vertex_mwpc.SetX(m1_point.X() - tx_in * m1_point.Z());
  vertex_mwpc.SetY(m1_point.Y() - ty_in * m1_point.Z());
  vertex_mwpc.SetZ(0);
+ if(abs(vertex_mwpc.X())>50 || abs(vertex_mwpc.Y())>50){return false;}
  //----- Make track candidates in FOOT and project them to the center of the target
  for (auto & f2 : f2_hits){
   auto f2_hit = static_cast<R3BFootHitData*>(fDataItems[FOOT_HITDATA]->At(f2));
@@ -513,12 +526,12 @@ void R3BTrackingS522::TransformPoint1(TVector3& point1, TVector3 rot1, TVector3 
  return;
 }
 
-R3BRpcTrack* R3BTrackingS522::AddTrackData(TVector3 mw, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath)
+R3BRpcTrack* R3BTrackingS522::AddTrackData(TVector3 mw, Double_t dx, Double_t dy, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath)
 {
  // Filling output track info
  TClonesArray& clref = *fTrackItems;
  Int_t size = clref.GetEntriesFast();
- return new (clref[size]) R3BRpcTrack(mw.X(), mw.Y(), mw.Z(), TX, TY, poq.X(), poq.Y(), poq.Z(), beta, gamma, flightPath);
+ return new (clref[size]) R3BRpcTrack(mw.X(), mw.Y(), mw.Z(), dx, dy, TX, TY, poq.X(), poq.Y(), poq.Z(), beta, gamma, flightPath);
 }
 
 // Setup energy cuts in foot and fibers 

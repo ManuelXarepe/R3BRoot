@@ -28,6 +28,8 @@ class R3BRpcTrack : public TObject
     R3BRpcTrack(Double_t X,
              Double_t Y,
              Double_t Z,
+             Double_t dx,
+             Double_t dy,
              Double_t TX,
              Double_t TY,
              Double_t px,
@@ -42,6 +44,8 @@ class R3BRpcTrack : public TObject
     inline const Double_t& GetX() const { return fX; }
     inline const Double_t& GetY() const { return fY; }
     inline const Double_t& GetZ() const { return fZ; }
+    inline const Double_t& Getdx() const { return fdx; }
+    inline const Double_t& Getdy() const { return fdy; }
     inline const Double_t& GetTX() const { return fTX; }
     inline const Double_t& GetTY() const { return fTY; }
     inline const Double_t& GetPx() const { return fPx; }
@@ -55,6 +59,8 @@ class R3BRpcTrack : public TObject
     Double_t fX;
     Double_t fY;
     Double_t fZ;
+    Double_t fdx;
+    Double_t fdy;
     Double_t fTX;
     Double_t fTY;
     Double_t fPx;

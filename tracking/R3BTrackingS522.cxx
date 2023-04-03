@@ -234,27 +234,27 @@ void R3BTrackingS522::Exec(Option_t* option){
 // cout << "\n mul_tofd after : " << mul_tofd << endl;    
 
  //FRS data
- auto frs_DataItems = fDataItems.at(FRS_DATA);
- if(frs_DataItems->GetEntries() < 1) return; 
- auto frs_data = static_cast<R3BFrsData*>(frs_DataItems->At(0));
- if(frs_data->GetBrho()<17.5 || frs_data->GetBrho()>17.7) return;
- if(frs_data->GetZ()<5.2 || frs_data->GetZ()>6.7) return;
- //------ Get TOFD data 
- R3BTofdHitData* tofd_hit{};
- bool is_good_tofd = false;
- for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
- {
-  tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
-  if (tofd_hit->GetDetId() == 1) // only hits from first plane
-  {
-   is_good_tofd = true;
-   break;
-  }
- }
- if(!is_good_tofd){ 
-  //cout<<"Bad_tofd"<<endl; 
-  return;
- }
+// auto frs_DataItems = fDataItems.at(FRS_DATA);
+// if(frs_DataItems->GetEntries() < 1) return; 
+// auto frs_data = static_cast<R3BFrsData*>(frs_DataItems->At(0));
+// if(frs_data->GetBrho()<17.5 || frs_data->GetBrho()>17.7) return;
+// if(frs_data->GetZ()<5.2 || frs_data->GetZ()>6.7) return;
+// //------ Get TOFD data 
+// R3BTofdHitData* tofd_hit{};
+// bool is_good_tofd = false;
+// for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
+// {
+//  tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
+//  if (tofd_hit->GetDetId() == 1) // only hits from first plane
+//  {
+//   is_good_tofd = true;
+//   break;
+//  }
+// }
+// if(!is_good_tofd){ 
+//  //cout<<"Bad_tofd"<<endl; 
+//  return;
+// }
  if(!MakeIncomingTracks()){ 
   //cout<<"Bad_incoming"<<endl; 
   return;//at least one good track candidate in FOOT
@@ -301,12 +301,12 @@ void R3BTrackingS522::Exec(Option_t* option){
 
    double dx = vertex_foot.X() - tin.vertex_mwpc_X;
    double dy = vertex_foot.Y() - tin.vertex_mwpc_Y;
-   cout << " delta : " << dx << " " << dy << endl;
-   cout << " counters : " << a << " " << b << " " << c << endl;
-   cout << " Foot : "  << tin.f2_y << " " << tin.f2_z << " " << tin.f1_x << " " << tin.f1_z << endl;
-   cout << " RPC : " << tout.rpc_x << " " << tout.rpc_y << " " << tout.rpc_z << " " << tout.rpc_tof << endl;
-   cout << " vertex_foot : "  <<  vertex_foot.X() << " " << vertex_foot.Y() << endl;
-   cout << " vertex_mwpc : "  <<  tin.vertex_mwpc_X << " " << tin.vertex_mwpc_Y << endl;
+   //cout << " delta : " << dx << " " << dy << endl;
+   //cout << " counters : " << a << " " << b << " " << c << endl;
+   //cout << " Foot : "  << tin.f2_y << " " << tin.f2_z << " " << tin.f1_x << " " << tin.f1_z << endl;
+   //cout << " RPC : " << tout.rpc_x << " " << tout.rpc_y << " " << tout.rpc_z << " " << tout.rpc_tof << endl;
+   //cout << " vertex_foot : "  <<  vertex_foot.X() << " " << vertex_foot.Y() << endl;
+   //cout << " vertex_mwpc : "  <<  tin.vertex_mwpc_X << " " << tin.vertex_mwpc_Y << endl;
 //   if(dy <-3. || dy>-1.){continue;}
    c++;
    vertex_mwpc_X[N_glob_tracks] = tin.vertex_mwpc_X;
@@ -334,7 +334,7 @@ void R3BTrackingS522::Exec(Option_t* option){
    rpc_Y[N_glob_tracks]   = tout.rpc_y;
    rpc_Z[N_glob_tracks]   = tout.rpc_z;
    rpc_T[N_glob_tracks]   = tout.rpc_tof;
-   tofd_Q[N_glob_tracks] = tofd_hit->GetEloss();
+   //tofd_Q[N_glob_tracks] = tofd_hit->GetEloss();
    N_glob_tracks++;
 
    TVector3 rpc(rpc_X[N_glob_tracks], rpc_Y[N_glob_tracks], rpc_Z[N_glob_tracks]);

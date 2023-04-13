@@ -275,7 +275,7 @@ void R3BTrackingS522::Exec(Option_t* option){
  }
  double a=0,b=0,c=0;
  double delta_TY0, delta_TX0;
- cout << "new event" << endl;
+// cout << "new event" << endl;
  for (auto & tin : tracks_in){
 	 a++;
 	 b=0;
@@ -329,6 +329,9 @@ void R3BTrackingS522::Exec(Option_t* option){
 
    f2_Y[N_glob_tracks]   = tin.f2_y;
    f2_Z[N_glob_tracks]   = tin.f2_z;
+
+   f1_Q[N_glob_tracks]   = tin.f1_Q;
+   f2_Q[N_glob_tracks]   = tin.f2_Q;
 
    rpc_X[N_glob_tracks]   = tout.rpc_x;
    rpc_Y[N_glob_tracks]   = tout.rpc_y;
@@ -422,8 +425,8 @@ bool R3BTrackingS522::MakeOutgoingTracks(){
   tr.rpc_x = rpc_point.X();
   tr.rpc_y = rpc_point.Y();
   tr.rpc_z = rpc_point.Z();
-  tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 22.8272);
-  //tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 21.2893);
+  tr.rpc_tof = (rpc_hit->GetTof() + 28.1768 + 32.1740);
+  //tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 22.8272);
   N_out_tracks++;
   tracks_out.push_back(tr);
  }

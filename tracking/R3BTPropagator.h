@@ -66,12 +66,6 @@ class R3BTPropagator : public TObject
                               const TVector3& normal,
                               TVector3& intersect);
  
-    Double_t Energy_loss_in_air(double beta,
-       		                double step,
-	                        double Z);
-
-    void update_particle(R3BTrackingParticle* particle, Double_t length, Double_t vecOut[7]);
-
     static Double_t Energy_loss_in_air(double beta, double step, double charge, double mass);
 
     static void update_particle(R3BTrackingParticle* particle,

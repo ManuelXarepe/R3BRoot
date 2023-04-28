@@ -155,11 +155,11 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
    if(ichn_left == ichn_right && ichn_right !=0){
     position = ((time_left-time_right)*CSTRIP/2. 
                - (fParCont1->GetAt(ichn_left -1)-2000));
-    std::cout << "position : " << position << " " <<  (fParCont1->GetAt(ichn_left -1)-2000) << std::endl;
+    //std::cout << "position : " << position << " " <<  (fParCont1->GetAt(ichn_left -1)-2000) << std::endl;
     charge   =  (charge_left + charge_right)/2.;
     time     = (time_left + time_right)/2.- fParCont2->GetAt(ichn_left -1);
     tof      = fTimeStitch->GetTime(time - fR3BEventHeader->GetTStart(), "trb", "vftx");
-    std::cout << " time : " << time << " " << tof << " " << fR3BEventHeader->GetTStart() << std::endl;
+    //std::cout << " time : " << time << " " << tof << " " << fR3BEventHeader->GetTStart() << std::endl;
     valid = true;
    }
   }

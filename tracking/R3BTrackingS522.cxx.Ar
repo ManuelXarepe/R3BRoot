@@ -216,30 +216,30 @@ void R3BTrackingS522::Exec(Option_t* option){
  mul_rpc  = fDataItems[DET_RPC]->GetEntries();
  mul_tofd = fDataItems[DET_TOFD]->GetEntries();
  
- //cout << "\n mul_m0 : " << mul_m0; 
- //cout << "\n mul_m1 : " << mul_m1; 
- //cout << "\n mul_los : " << mul_los; 
- //cout << "\n mul_foot : " << mul_foot; 
- //cout << "\n mul_rpc : " << mul_rpc; 
- //cout << "\n mul_tofd : " << mul_tofd; 
+// cout << "\n mul_m0 : " << mul_m0; 
+// cout << "\n mul_m1 : " << mul_m1; 
+// cout << "\n mul_los : " << mul_los; 
+// cout << "\n mul_foot : " << mul_foot; 
+// cout << "\n mul_rpc : " << mul_rpc; 
+// cout << "\n mul_tofd : " << mul_tofd; 
 
 
- if(mul_m0!=1 || mul_m1!=1 || mul_foot<1 || mul_los<1 || mul_rpc==0) return;//for now take only mul=1 in mwpcs
+ if(mul_m0!=1 || mul_m1!=1 || mul_foot<1 || mul_los>1 || mul_rpc==0) return;//for now take only mul=1 in mwpcs
  
- //cout << "\n mul_m0 after : " << mul_m0 << endl; 
- //cout << "\n mul_m1 after : " << mul_m1 << endl; 
- //cout << "\n mul_los after : " << mul_los << endl; 
- //cout << "\n mul_foot after : " << mul_foot << endl; 
- //cout << "\n mul_rpc after : " << mul_rpc << endl; 
- //cout << "\n mul_tofd after : " << mul_tofd << endl;    
+// cout << "\n mul_m0 after : " << mul_m0 << endl; 
+// cout << "\n mul_m1 after : " << mul_m1 << endl; 
+// cout << "\n mul_los after : " << mul_los << endl; 
+// cout << "\n mul_foot after : " << mul_foot << endl; 
+// cout << "\n mul_rpc after : " << mul_rpc << endl; 
+// cout << "\n mul_tofd after : " << mul_tofd << endl;    
 
  //FRS data
- auto frs_DataItems = fDataItems.at(FRS_DATA);
- if(frs_DataItems->GetEntries() < 1) return; 
- auto frs_data = static_cast<R3BFrsData*>(frs_DataItems->At(0));
- if(frs_data->GetBrho()<17.5 || frs_data->GetBrho()>17.7) return;
- if(frs_data->GetZ()<5.2 || frs_data->GetZ()>6.7) return;
- //------ Get TOFD data 
+// auto frs_DataItems = fDataItems.at(FRS_DATA);
+// if(frs_DataItems->GetEntries() < 1) return; 
+// auto frs_data = static_cast<R3BFrsData*>(frs_DataItems->At(0));
+// if(frs_data->GetBrho()<17.5 || frs_data->GetBrho()>17.7) return;
+// if(frs_data->GetZ()<5.2 || frs_data->GetZ()>6.7) return;
+// //------ Get TOFD data 
 // R3BTofdHitData* tofd_hit{};
 // bool is_good_tofd = false;
 // for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
@@ -252,15 +252,15 @@ void R3BTrackingS522::Exec(Option_t* option){
 //  }
 // }
 // if(!is_good_tofd){ 
-//  cout<<"Bad_tofd"<<endl; 
+//  //cout<<"Bad_tofd"<<endl; 
 //  return;
 // }
  if(!MakeIncomingTracks()){ 
-  cout<<"Bad_incoming"<<endl; 
+  //cout<<"Bad_incoming"<<endl; 
   return;//at least one good track candidate in FOOT
  }
  if(!MakeOutgoingTracks()){ 
-  cout<<"Bad_outgoing"<<endl; 
+  //cout<<"Bad_outgoing"<<endl; 
   return;//at least one good track candidate in Rpc
  }
 // if(mul_f1>10 || mul_f2>10 || mul_f15>10 || mul_f16 >10) return;
@@ -301,12 +301,12 @@ void R3BTrackingS522::Exec(Option_t* option){
 
    double dx = vertex_foot.X() - tin.vertex_mwpc_X;
    double dy = vertex_foot.Y() - tin.vertex_mwpc_Y;
-//   cout << " delta : " << dx << " " << dy << endl;
-//   cout << " counters : " << a << " " << b << " " << c << endl;
-//   cout << " Foot : "  << tin.f2_y << " " << tin.f2_z << " " << tin.f1_x << " " << tin.f1_z << endl;
-//   cout << " RPC : " << tout.rpc_x << " " << tout.rpc_y << " " << tout.rpc_z << " " << tout.rpc_tof << endl;
-//   cout << " vertex_foot : "  <<  vertex_foot.X() << " " << vertex_foot.Y() << endl;
-//   cout << " vertex_mwpc : "  <<  tin.vertex_mwpc_X << " " << tin.vertex_mwpc_Y << endl;
+   //cout << " delta : " << dx << " " << dy << endl;
+   //cout << " counters : " << a << " " << b << " " << c << endl;
+   //cout << " Foot : "  << tin.f2_y << " " << tin.f2_z << " " << tin.f1_x << " " << tin.f1_z << endl;
+   //cout << " RPC : " << tout.rpc_x << " " << tout.rpc_y << " " << tout.rpc_z << " " << tout.rpc_tof << endl;
+   //cout << " vertex_foot : "  <<  vertex_foot.X() << " " << vertex_foot.Y() << endl;
+   //cout << " vertex_mwpc : "  <<  tin.vertex_mwpc_X << " " << tin.vertex_mwpc_Y << endl;
 //   if(dy <-3. || dy>-1.){continue;}
    c++;
    vertex_mwpc_X[N_glob_tracks] = tin.vertex_mwpc_X;
@@ -419,14 +419,14 @@ bool R3BTrackingS522::MakeOutgoingTracks(){
  N_out_tracks=0;
  for (auto i=0; i<fDataItems[DET_RPC]->GetEntriesFast(); ++i){
   auto rpc_hit = static_cast<R3BRpcHitData*>(fDataItems[DET_RPC]->At(i));
-  if(rpc_hit->GetDetId()!=0) continue;
+  if(rpc_hit->GetDetId()!=0 || rpc_hit->GetChannelId()!=21) continue;
   rpc_point.SetXYZ(-1 * (rpc_hit->GetPos()*0.1 -75) ,rpc_hit->GetChannelId()*3. - 21.*3., 0); //cm
   TransformPoint(rpc_point, &rpc_angles, &rpc_position);
   tr.rpc_x = rpc_point.X();
   tr.rpc_y = rpc_point.Y();
   tr.rpc_z = rpc_point.Z();
-  //tr.rpc_tof = (rpc_hit->GetTof() + 28.1768 + 32.1740);
-  tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 22.8272);
+  tr.rpc_tof = (rpc_hit->GetTof() + 28.1768 + 32.1740);
+  //tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 22.8272);
   N_out_tracks++;
   tracks_out.push_back(tr);
  }
@@ -462,7 +462,7 @@ bool R3BTrackingS522::MakeIncomingTracks()
  vertex_mwpc.SetX(m1_point.X() - tx_in * m1_point.Z());
  vertex_mwpc.SetY(m1_point.Y() - ty_in * m1_point.Z());
  vertex_mwpc.SetZ(0);
-  // if(abs(vertex_mwpc.X())>50 || abs(vertex_mwpc.Y())>50){return false;}
+ if(abs(vertex_mwpc.X())>50 || abs(vertex_mwpc.Y())>50){return false;}
  //----- Make track candidates in FOOT and project them to the center of the target
  for (auto & f2 : f2_hits){
   auto f2_hit = static_cast<R3BFootHitData*>(fDataItems[FOOT_HITDATA]->At(f2));

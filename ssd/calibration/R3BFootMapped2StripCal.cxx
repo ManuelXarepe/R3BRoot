@@ -261,7 +261,6 @@ void R3BFootMapped2StripCal::Exec(Option_t* option)
 
        // energy = mappedData[i]->GetEnergy() - pedestal - Ave[detId] - AveASIC[detId][ASIC1];
         energy = mappedData[i]->GetEnergy() - pedestal - fTimesSigma * sigma - Ave[detId] - AveASIC[detId][ASIC1];
-
         if (energy > 0. && pedestal != -1)
         {
             StripCounter[detId]++;

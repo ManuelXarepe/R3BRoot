@@ -16,10 +16,10 @@
 #include "R3BTGeoPar.h"
 #include "R3BTrackingDetector.h"
 #include "R3BTrackingParticle.h"
-#include <iostream>
+
 #include "FairLogger.h"
 #include "FairRKPropagator.h"
-
+#include <iostream>
 #include "TH2F.h"
 #include "TLine.h"
 #include "TMath.h"
@@ -300,20 +300,16 @@ Bool_t R3BTPropagator::PropagateToPlaneRK(R3BTrackingParticle* particle,
     TVector3 norm = ((v2 - v1).Cross(v3 - v1)).Unit();
     TVector3 intersect;
 
-    Double_t original_step = (v1 - particle->GetPosition()).Mag() * 0.99; 
+    Double_t step = (v1 - particle->GetPosition()).Mag() * 0.99;
     Double_t length = 0.;
+
     while (kTRUE)
     {
-        Double_t step = (v1 - particle->GetPosition()).Mag() * 0.99;
-	cout << original_step << " " << step << " " << v1.X() << " " << v1.Y() << " " << v1.Z() << endl;
         length = fFairProp->OneStepRungeKutta(particle->GetCharge(), step, vecRKIn, vecOut);
 
-        std::cout << " \n in while loop " << nStep << " " << step << " " << length << " " << particle->GetPosition().X() << " " << particle->GetPosition().Y() << " " << particle->GetPosition().Z() << std::endl;
         for (Int_t ii = 0; ii < 7; ii++)
         {
-	    std::cout << "\n " << ii << " " << vecRKIn[ii] << std::endl; 
             vecRKIn[ii] = vecOut[ii];
-	    std::cout << "\n " << ii << " " << vecOut[ii] << std::endl; 
         }
 
         particle->SetPosition(vecOut);
@@ -329,12 +325,10 @@ Bool_t R3BTPropagator::PropagateToPlaneRK(R3BTrackingParticle* particle,
             }
             step = (intersect - TVector3(vecTemp[0], vecTemp[1], vecTemp[2])).Mag() * 0.99;
             length = fFairProp->OneStepRungeKutta(particle->GetCharge(), step, vecTemp, vecOut);
-
-            std::cout << " \n in if " << nStep << " " << step << " " << length << " " << particle->GetPosition().X() << " " << particle->GetPosition().Y() << " " << particle->GetPosition().Z() << std::endl;
-        /*    particle->SetPosition(vecOut);
+            particle->SetPosition(vecOut);
             particle->SetCosines(&vecOut[3]);
             particle->AddStep(length);
-            break;*/
+            break;
         }
 
         step = (v1 - particle->GetPosition()).Mag();
@@ -349,6 +343,77 @@ Bool_t R3BTPropagator::PropagateToPlaneRK(R3BTrackingParticle* particle,
         }
     }
 
+    return kTRUE;
+}
+
+Bool_t R3BTPropagator::PropagateToPlaneRK_eloss(R3BTrackingParticle* particle,
+                                                const TVector3& point1,
+                                                const TVector3& point2,
+                                                const TVector3& point3,
+                                                double& Tot_Tof,
+                                                double step,
+                                                bool eloss)
+{
+
+    std::array<double, N_PARTICLE_INFO> vecRKIn{};
+    std::array<double, N_PARTICLE_INFO> vecTemp{};
+    std::array<double, N_PARTICLE_INFO> vecOut{};
+
+    particle->GetPosition(vecRKIn.data());
+    particle->GetCosines(&vecRKIn[3]);
+
+    const TVector3 norm = ((point2 - point1).Cross(point3 - point1)).Unit();
+    TVector3 intersect;
+    
+    static Double_t original_step = {};
+    if(LineIntersectPlane(particle->GetPosition(), particle->GetMomentum(), point1, norm, intersect)\
+		    && (intersect - particle->GetPosition()).Mag() < (point1 - particle->GetPosition()).Mag()){
+	original_step = (intersect - particle->GetPosition()).Mag();
+    }
+    else{
+	original_step = (point1 - particle->GetPosition()).Mag();
+    }
+    Double_t length = 0.;
+    Double_t total_steps = original_step;
+    cout << " intersect : " << intersect.X() << " " << intersect.Y() << " " << intersect.Z() << endl;
+    cout << " particle : " << particle->GetPosition().X() << " " << particle->GetPosition().Y() << " " << particle->GetPosition().Z() << endl;
+    cout << " point : " << point1.X() << " " << point1.Y() << " " << point1.Z() << endl;
+    cout << " step : " << (intersect - particle->GetPosition()).Mag() << " " << (point1 - particle->GetPosition()).Mag() << " " << original_step << endl;
+
+    if (original_step - step < step)
+    {
+        LOG(error) << "step " << step << " is too big compared with original step of " << original_step;
+        return kFALSE;
+    }
+    // propagates the particle with a fixed step
+    while (total_steps - step > step)
+    {
+        length = fFairProp->OneStepRungeKutta(particle->GetCharge(), step, vecRKIn.data(), vecOut.data());
+        // update particle info
+        update_particle(particle, length, vecOut, eloss);
+        // update position and momentum array
+        std::copy_n(vecOut.begin(), vecOut.size(), vecRKIn.begin());
+        if (particle->GetBeta() < 0)
+        {
+            LOG(error) << "particle was stopped did not reach destination";
+            return kFALSE;
+        }
+
+        Tot_Tof += length / (particle->GetBeta() * (TMath::C() / (1e7)));
+        total_steps -= step;
+    }
+    if(LineIntersectPlane(particle->GetPosition(), particle->GetMomentum(), point1, norm, intersect)){
+	    // update position and momentum array
+	    std::copy_n(vecOut.begin(), vecOut.size(), vecTemp.begin());
+	    step = (intersect - TVector3(vecTemp[0], vecTemp[1], vecTemp[2])).Mag();
+	    length = fFairProp->OneStepRungeKutta(particle->GetCharge(), step, vecTemp.data(), vecOut.data());
+	    // update particle info
+	    update_particle(particle, length, vecOut, eloss);
+	    Tot_Tof += length / (particle->GetBeta() * (TMath::C() / (1e7)));
+	    cout << " length after " <<  particle->GetLength() << endl;
+	    return kTRUE;
+    }
+    cout << " length after without passing " <<  particle->GetLength() << endl;
     return kTRUE;
 }
 
@@ -374,6 +439,52 @@ Bool_t R3BTPropagator::LineIntersectPlane(const TVector3& pos,
         intersect = pos + mom * t;
     }
     return kTRUE;
+}
+
+void R3BTPropagator::update_particle(R3BTrackingParticle* particle,
+                                     Double_t length,
+                                     std::array<double, N_PARTICLE_INFO>& vecOut,
+                                     bool eloss)
+{
+    if (eloss)
+    {
+        const Double_t DeltaE =
+            Energy_loss_in_air(particle->GetBeta(), length, particle->GetCharge(), particle->GetMass());
+        particle->SetStartBeta(particle->GetBeta());
+        const Double_t deltaBeta = particle->DeltaEToDeltaBeta(DeltaE);
+        particle->SetBeta(particle->GetBeta() - deltaBeta);
+        particle->SetPosition(vecOut.data());
+        particle->SetCosines(&vecOut[3]);
+        particle->AddStep(length);
+        particle->UpdateMomentum();
+        vecOut[6] = particle->GetMomentum().Mag(); // NOLINT
+    }
+    else
+    {
+        particle->SetPosition(vecOut.data());
+        particle->SetCosines(&vecOut[3]);
+        particle->AddStep(length);
+    }
+}
+
+Double_t R3BTPropagator::Energy_loss_in_air(double beta, double step, double charge, double mass)
+{
+    const double me = 0.51099895; // NOLINT // MeV/c^2
+
+    // Values taken from https://pdg.lbl.gov/2022/AtomicNuclearProperties/HTML/air_dry_1_atm.html
+    const double ZoAair = 0.49919;
+    const double I = 85.7e-6;    // NOLINT // MeV (mean excitation energy) taken from PDG site
+    const double rho = 0.001205; // g/cm^3 (density of air at STP)
+    const double K = 0.307075;   // NOLINT // MeV mol^-1 cm^2 (constant factor)
+    const double gamma = 1 / (sqrt(1 - pow(beta, 2)));
+    const double Tmax =
+        (2 * me * pow(beta * gamma, 2)) / (1 + 2 * gamma * me / (mass * 1000.) + pow(me / (mass * 1000.), 2));
+
+    // Bethe Bloch formula
+    const double delta = K * rho * (ZoAair)*pow(charge / beta, 2) * 0.5 *
+                         (log((2 * me * pow(beta * gamma, 2) * Tmax) / pow(I, 2)) - pow(beta, 2));
+
+    return delta * step / 1000.;
 }
 
 ClassImp(R3BTPropagator)

@@ -425,7 +425,7 @@ bool R3BTrackingS522::MakeOutgoingTracks(){
   tr.rpc_x = rpc_point.X();
   tr.rpc_y = rpc_point.Y();
   tr.rpc_z = rpc_point.Z();
-  tr.rpc_tof = (rpc_hit->GetTof() + 28.1768 + 32.1740);
+  tr.rpc_tof = (rpc_hit->GetTof() + 28.1768 + 32.9905);
   //tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 22.8272);
   N_out_tracks++;
   tracks_out.push_back(tr);

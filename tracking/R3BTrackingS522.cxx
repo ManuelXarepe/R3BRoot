@@ -120,14 +120,14 @@ InitStatus R3BTrackingS522::Init()
  LOG(info) << "Reading MDF function for FlightPath";
  MDF_FlightPath = new R3BMDFWrapper(MDF_FlightPath_filename.Data());
 
- LOG(info) << "Reading MDF function for PoQ";
- MDF_PoQ = new R3BMDFWrapper(MDF_PoQ_filename.Data());
-
  LOG(info) << "Reading MDF function for TX0";
  MDF_TX0 = new R3BMDFWrapper(MDF_TX0_filename.Data());
 
  LOG(info) << "Reading MDF function for TY0";
  MDF_TY0 = new R3BMDFWrapper(MDF_TY0_filename.Data());
+
+ LOG(info) << "Reading MDF function for PoQ";
+ MDF_PoQ = new R3BMDFWrapper(MDF_PoQ_filename.Data());
  // linking to global pointer (needed by alignment)
  gMDFTrackerS522 = this;
 

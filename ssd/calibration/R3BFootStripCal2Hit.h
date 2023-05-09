@@ -139,7 +139,7 @@ class R3BFootStripCal2Hit : public FairTask
     TF1 *fZ9NoOff_15;
     
 
-    Double_t EtaCorr_Lagni(/*TF1* ffZ3,*/
+    Double_t EtaCorr_Lagni(TF1* ffZ3,
                            TF1* ffZ4,
                            TF1* ffZ5,
                            TF1* ffZ6,

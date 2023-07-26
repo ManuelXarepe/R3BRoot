@@ -30,6 +30,7 @@
 #pragma link C++ class R3BMDFWrapper+;
 #pragma link C++ class R3BTrackingS515+;
 #pragma link C++ class R3BTrackingS522+;
+#pragma link C++ class R3BTrackingProtons+;
 
 #endif
 

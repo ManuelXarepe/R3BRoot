@@ -73,6 +73,10 @@ class R3BTrackingS522 : public FairTask
     void SetEulerAnglesMwpc1(double x, double y, double z) { m1_angles.SetXYZ(x, y, z);    }// rad
 
     // FOOTs
+    void SetPositionFoot1(double x, double y, double z)     { f1_position.SetXYZ(x, y, z);   }// cm
+    void SetPositionFoot2(double x, double y, double z)     { f2_position.SetXYZ(x, y, z);   }// cm
+    void SetEulerAnglesFoot1(double x, double y, double z)  { f1_angles.SetXYZ(x, y, z);     }// rad
+    void SetEulerAnglesFoot2(double x, double y, double z)  { f2_angles.SetXYZ(x, y, z);     }// rad
     void SetPositionFoot15(double x, double y, double z)    { f15_position.SetXYZ(x, y, z);  }// cm
     void SetPositionFoot16(double x, double y, double z)    { f16_position.SetXYZ(x, y, z);  }// cm
     void SetEulerAnglesFoot15(double x, double y, double z) { f15_angles.SetXYZ(x, y, z);    }// rad
@@ -90,16 +94,20 @@ class R3BTrackingS522 : public FairTask
     inline TVector3 GetPositionLos()       { return los_position;  } // cm
     inline TVector3 GetPositionMwpc0()     { return m0_position;   } // cm
     inline TVector3 GetPositionMwpc1()     { return m1_position;   } // cm
-    inline TVector3 GetPositionFoot15()     { return f15_position;   } // cm
-    inline TVector3 GetPositionFoot16()     { return f16_position;   } // cm
+    inline TVector3 GetPositionFoot1()     { return f1_position;   } // cm
+    inline TVector3 GetPositionFoot2()     { return f2_position;   } // cm
+    inline TVector3 GetPositionFoot15()    { return f15_position;  } // cm
+    inline TVector3 GetPositionFoot16()    { return f16_position;  } // cm
     inline TVector3 GetPositionRpc()       { return rpc_position;  } // cm
     inline TVector3 GetPositionTofd()      { return tofd_position; } // cm
 
     inline TVector3 GetEulerAnglesLos()    { return los_angles;    } // cm
     inline TVector3 GetEulerAnglesMwpc0()  { return m0_angles;     } // cm
     inline TVector3 GetEulerAnglesMwpc1()  { return m1_angles;     } // cm
-    inline TVector3 GetEulerAnglesFoot15()  { return f15_angles;     } // cm
-    inline TVector3 GetEulerAnglesFoot16()  { return f16_angles;     } // cm
+    inline TVector3 GetEulerAnglesFoot1()  { return f1_angles;     } // cm
+    inline TVector3 GetEulerAnglesFoot2()  { return f2_angles;     } // cm
+    inline TVector3 GetEulerAnglesFoot15() { return f15_angles;    } // cm
+    inline TVector3 GetEulerAnglesFoot16() { return f16_angles;    } // cm
     inline TVector3 GetEulerAnglesRpc()    { return rpc_angles;    } // rad
     inline TVector3 GetEulerAnglesTofd()   { return tofd_angles;   } // rad
 
@@ -125,6 +133,10 @@ class R3BTrackingS522 : public FairTask
 
     //Storing indices of hits in TCA for potential track candidates
     struct Track{
+     double f1_x={};
+     double f1_z={};
+     double f2_y={};
+     double f2_z={};
      double f15_x={};
      double f15_z={};
      double f16_y={};
@@ -142,9 +154,11 @@ class R3BTrackingS522 : public FairTask
     std::vector<Track> tracks_out;//track candidates in FOOT
 
     //Storage of hit indices
+    vector<UInt_t> f1_hits={};
+    vector<UInt_t> f2_hits={};
     vector<UInt_t> f15_hits={};
     vector<UInt_t> f16_hits={};
-    TVector3 m0_point, m1_point, f15_point, f16_point, rpc_point;
+    TVector3 m0_point, m1_point, f1_point, f2_point, f15_point, f16_point, rpc_point;
     TVector3 m0_point_i, m1_point_i, f15_point_i, f16_point_i, rpc_point_i;
     double rpc_tof={0},rpc_tof_i={0};
     bool IsGoodFootHit(R3BFootHitData* fhit);
@@ -160,6 +174,8 @@ class R3BTrackingS522 : public FairTask
      double rpc_tof;
     };
     std::vector<det_points> det_points_vec;
+    TVector3 f1_ang_offset, f2_ang_offset;
+    TVector3 f1_pos_offset, f2_pos_offset;
     TVector3 f15_ang_offset, f16_ang_offset;
     TVector3 f15_pos_offset, f16_pos_offset;
     TVector3 rpc_pos_offset, rpc_ang_offset;
@@ -204,11 +220,15 @@ class R3BTrackingS522 : public FairTask
 
     TVector3 m0_position;
     TVector3 m1_position;
+    TVector3 f1_position;
+    TVector3 f2_position;
     TVector3 f15_position;
     TVector3 f16_position;
 
     TVector3 m0_angles;
     TVector3 m1_angles;
+    TVector3 f1_angles;
+    TVector3 f2_angles;
     TVector3 f15_angles;
     TVector3 f16_angles;
 
@@ -253,6 +273,8 @@ class R3BTrackingS522 : public FairTask
     UInt_t mul_los={};
     UInt_t mul_m0={};
     UInt_t mul_m1={};
+    UInt_t mul_f1={};
+    UInt_t mul_f2={};
     UInt_t mul_f15={};
     UInt_t mul_f16={};
     UInt_t mul_rpc={};
@@ -288,6 +310,18 @@ class R3BTrackingS522 : public FairTask
     Float_t dx_vertex[N_glob_tracks_max]={};
     Float_t dy_vertex[N_glob_tracks_max]={};
 
+    Float_t f1_X_i[N_glob_tracks_max]={};
+    Float_t f1_Y_i[N_glob_tracks_max]={};
+    Float_t f1_Z_i[N_glob_tracks_max]={};
+    Float_t f1_Q_i[N_glob_tracks_max]={};
+    Float_t f1_T_i[N_glob_tracks_max]={};
+
+    Float_t f2_X_i[N_glob_tracks_max]={};
+    Float_t f2_Y_i[N_glob_tracks_max]={};
+    Float_t f2_Z_i[N_glob_tracks_max]={};
+    Float_t f2_Q_i[N_glob_tracks_max]={};
+    Float_t f2_T_i[N_glob_tracks_max]={};
+
     Float_t f15_X_i[N_glob_tracks_max]={};
     Float_t f15_Y_i[N_glob_tracks_max]={};
     Float_t f15_Z_i[N_glob_tracks_max]={};
@@ -304,6 +338,18 @@ class R3BTrackingS522 : public FairTask
     Float_t rpc_Y_i[N_glob_tracks_max]={};
     Float_t rpc_Z_i[N_glob_tracks_max]={};
     Float_t rpc_T_i[N_glob_tracks_max]={};
+
+    Float_t f1_X[N_glob_tracks_max]={};
+    Float_t f1_Y[N_glob_tracks_max]={};
+    Float_t f1_Z[N_glob_tracks_max]={};
+    Float_t f1_Q[N_glob_tracks_max]={};
+    Float_t f1_T[N_glob_tracks_max]={};
+
+    Float_t f2_X[N_glob_tracks_max]={};
+    Float_t f2_Y[N_glob_tracks_max]={};
+    Float_t f2_Z[N_glob_tracks_max]={};
+    Float_t f2_Q[N_glob_tracks_max]={};
+    Float_t f2_T[N_glob_tracks_max]={};
 
     Float_t f15_X[N_glob_tracks_max]={};
     Float_t f15_Y[N_glob_tracks_max]={};

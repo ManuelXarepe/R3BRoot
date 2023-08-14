@@ -152,7 +152,7 @@ void R3BRpcCal2HitPar::Exec(Option_t* opt)
     chn_rpc = map1->GetChannelId();
     pos_rpc = (map1->GetTimeL_T() - map1->GetTimeR_B());
     rpc_hit = true;
-    if (tpat1>0){ 
+    if (tpat2>0){ 
      if (NULL == fhPos[inum]){
       char strName[255];
       char strName_par[255];
@@ -214,7 +214,7 @@ void R3BRpcCal2HitPar::CalculateParsPosStrip(){
    fhPar[t]->Fill(i,sum);
   }
   fhPar[t]->Scale(fhPar[t]->GetXaxis()->GetBinWidth(1)/(sum));
-  fHitPar->SetCalParams1(fhPar[t]->FindFirstBinAbove(0.008,1),t);
+  fHitPar->SetCalParams1(fhPar[t]->FindFirstBinAbove(0.01,1),t);
  }
 }
 

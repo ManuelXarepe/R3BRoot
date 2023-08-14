@@ -576,7 +576,7 @@ void R3BFootStripCal2Hit::Exec(Option_t* option)
 
 			if (fAnglePhi[i] == 0.)
 			{ // X-Foot (StripId numbered from left to right)
-				x = pos * TMath::Cos(fAngleTheta[i] * TMath::DegToRad()) + fOffsetX[i];
+				x = -1*(pos * TMath::Cos(fAngleTheta[i] * TMath::DegToRad()) + fOffsetX[i]);
 				y = fOffsetY[i];
 				z = pos * TMath::Sin(fAngleTheta[i] * TMath::DegToRad()) + fDistTarget[i];
 			}
@@ -588,7 +588,7 @@ void R3BFootStripCal2Hit::Exec(Option_t* option)
 			}
 			else if (fAnglePhi[i] == 180.)
 			{ // X-Foot (StripId numbered from right to left)
-				x = -pos * TMath::Cos(fAngleTheta[i] * TMath::DegToRad()) + fOffsetX[i];
+				x = -1*( -pos * TMath::Cos(fAngleTheta[i] * TMath::DegToRad()) + fOffsetX[i]);
 				y = fOffsetY[i];
 				z = -pos * TMath::Sin(fAngleTheta[i] * TMath::DegToRad()) + fDistTarget[i];
 			}

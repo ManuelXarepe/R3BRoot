@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -73,7 +73,7 @@ R3BFiberMAPMTCal2Hit::R3BFiberMAPMTCal2Hit(const char* a_name,
     , fnEvents(0)
     , ftofmin(-1000)
     , ftofmax(1000)
-    , fWrite(true)
+    , fWrite(false)
     , fGate_ns(100.)
     , fOnline(kFALSE)
     , fOrientation(STANDARD)
@@ -118,16 +118,14 @@ InitStatus R3BFiberMAPMTCal2Hit::Init()
 
     fHeader = dynamic_cast<R3BEventHeader*>(mgr->GetObject("EventHeader."));
     R3BLOG_IF(fatal, NULL == fHeader, "EventHeader. not found");
-    //fHitLos = dynamic_cast<TClonesArray*>(mgr->GetObject("LosHit"));
-    //R3BLOG_IF(fatal, !fHitLos, "Branch LosHitData not found");
 
     auto name = fName + "Cal";
     fCalItems = dynamic_cast<TClonesArray*>(mgr->GetObject(name));
-    R3BLOG_IF(info, !fCalItems, "Branch " << name << " not found.");
+    R3BLOG_IF(fatal, !fCalItems, "Branch " << name << " not found.");
 
     auto name_mapmt_trig = fName + "TriggerCal";
     fCalTriggerItems = dynamic_cast<TClonesArray*>(mgr->GetObject(name_mapmt_trig));
-    R3BLOG_IF(info, NULL == fCalTriggerItems, "Branch " << name_mapmt_trig << " not found");
+    R3BLOG_IF(fatal, NULL == fCalTriggerItems, "Branch " << name_mapmt_trig << " not found");
 
     // maxevent = mgr->CheckMaxEventNo();
 
@@ -161,16 +159,16 @@ InitStatus R3BFiberMAPMTCal2Hit::Init()
     // ToF Tofd -> Fiber:
     chistName = fName + "_time";
     chistTitle = fName + " Time";
-    fh_Fib_ToF = new TH2F(chistName.Data(), chistTitle.Data(), fNumFibers, 1, fNumFibers + 1, 10000, -5000., 5000.);
+    fh_Fib_ToF = new TH2F(chistName.Data(), chistTitle.Data(), fNumFibers, 1, fNumFibers + 1, 100, -12000., 12000.);
     fh_Fib_ToF->GetYaxis()->SetTitle("Time/ ns");
-    fh_Fib_ToF->GetXaxis()->SetTitle("Fiber number");
+    fh_Fib_ToF->GetXaxis()->SetTitle("Fiber ID");
 
     // ToF Fiber for sync:
     chistName = fName + "_time_raw";
     chistTitle = fName + " Time raw";
-    fh_Fib_ToF_raw = new TH2F(chistName.Data(), chistTitle.Data(), fNumFibers, 1, fNumFibers + 1, 10000, -5000., 5000.);
+    fh_Fib_ToF_raw = new TH2F(chistName.Data(), chistTitle.Data(), fNumFibers, 1, fNumFibers + 1, 100, -12000., 12000.);
     fh_Fib_ToF_raw->GetYaxis()->SetTitle("Time/ ns");
-    fh_Fib_ToF_raw->GetXaxis()->SetTitle("Fiber number");
+    fh_Fib_ToF_raw->GetXaxis()->SetTitle("Fiber ID");
 
     // ToT top MAPMT raw:
     chistName = fName + "_ToT_top_raw";
@@ -221,14 +219,6 @@ InitStatus R3BFiberMAPMTCal2Hit::Init()
     fh_time_check_tsync = new TH2F(chistName.Data(), chistTitle.Data(), 50000, 0, 1e6, 400, -100., 100.);
     fh_time_check_tsync->GetXaxis()->SetTitle("Event number");
     fh_time_check_tsync->GetYaxis()->SetTitle("dt / ns");
-
-    
-    // histos to check hit parameters
-    chistName = fName + "_check_dtime";
-    chistTitle = fName + " check dtime vs ToF";
-    fh_time_check_dtime = new TH2F(chistName.Data(), chistTitle.Data(), 1000, -5000, 5000, 1000, -12000., 12000.);
-    fh_time_check_dtime->GetXaxis()->SetTitle("dtime / ns");
-    fh_time_check_dtime->GetYaxis()->SetTitle("tof / ns");
 
     // Definition of a time stich object to correlate times coming from different systems
     fTimeStitch = new R3BCoarseTimeStitch();
@@ -339,23 +329,10 @@ void R3BFiberMAPMTCal2Hit::Exec(Option_t* option)
             cur_cal_trig_ns = trig_time[fMapPar->GetTrigMap(side_i + 1, ch_i + 1)];
             lead_trig_ns = trig_time[fMapPar->GetTrigMap(side_i + 1, chlead_i + 1)];
 
-            /*auto cur_cal_ns =
-            fTimeStitch->GetTime(cur_cal_trail->GetTime_ns(), "clocktdc", "clocktdc") - fTimeStitch->GetTime(cur_cal_trig_ns, "clocktdc", "clocktdc");
-            lead_ns = fTimeStitch->GetTime(lead->GetTime_ns(), "clocktdc", "clocktdc") - fTimeStitch->GetTime(lead_trig_ns, "clocktdc", "clocktdc");
-            tot_ns = fTimeStitch->GetTime(cur_cal_ns, "clocktdc", "clocktdc") - fTimeStitch->GetTime(lead_ns, "clocktdc", "clocktdc");*/
-          
             auto cur_cal_ns =
-                cur_cal_trail->GetTime_ns() - cur_cal_trig_ns;
-            lead_ns = lead->GetTime_ns() - lead_trig_ns;
-            tot_ns = cur_cal_ns - lead_ns;
-
-            if(lead_ns > 5000.){
-                lead_ns = lead->GetTime_ns() - (lead_trig_ns + 4096.*1000./150.);
-            }
-            /*There is something going on with the TimeStitch function. As a modulo operation it should in theory give out proper values
-            but -- for an unexplained reason -- it produces a non-negligable amount of time values which are completely off the rails.
-            As a hotfix I have re-introduced the "old-fashioned way" of adjusting for cycle-jumps. This is right now not elegant, but
-            it does its job. To be continued...*/
+                fTimeStitch->GetTime(cur_cal_trail->GetTime_ns() - cur_cal_trig_ns, "clocktdc", "clocktdc");
+            lead_ns = fTimeStitch->GetTime(lead->GetTime_ns() - lead_trig_ns, "clocktdc", "clocktdc");
+            tot_ns = fTimeStitch->GetTime(cur_cal_ns - lead_ns, "clocktdc", "clocktdc");
 
             lead_raw = lead->GetTime_ns();
             trail_raw = cur_cal_trail->GetTime_ns();
@@ -412,34 +389,13 @@ void R3BFiberMAPMTCal2Hit::Exec(Option_t* option)
                     auto tot_up = up_tot.tot_ns;
                     Double_t t_down = down_tot.lead_ns;
                     Double_t t_up = up_tot.lead_ns;
-                    Double_t dtime = t_up - t_down;
-                    //Double_t dtime = fTimeStitch->GetTime(t_up - t_down, "clocktdc", "clocktdc");
-                    
-                    Double_t tof0 = fHeader ? fTimeStitch->GetTime(t_up - fHeader->GetTStart(), "vftx", "clocktdc")
-                                : t_up;
-                    Double_t tof1 = fHeader ? fTimeStitch->GetTime(t_down - fHeader->GetTStart(), "vftx", "clocktdc")
-                                : t_down;
-                    
-                    Double_t tof00 = (tof0 + tof1) / 2.;
+                    Double_t dtime = fTimeStitch->GetTime(t_up - t_down, "clocktdc", "clocktdc");
+                    Double_t tof =
+                        fHeader ? fTimeStitch->GetTime((t_up + t_down) / 2. - fHeader->GetTStart(), "vftx", "clocktdc")
+                                : (t_up + t_down) / 2.;
 
-                    Double_t tof01 = fHeader ? fTimeStitch->GetTime((t_up+t_down)/2., "vftx", "clocktdc")
-                                : 0./0.;
-                    Double_t tof11 = fHeader ? fTimeStitch->GetTime(fHeader->GetTStart(), "vftx", "clocktdc")
-                                : 0./0.;
-                    
-                    //Double_t tof = tof01 - tof11;
-                    Double_t tof = fHeader ? fTimeStitch->GetTime((t_up+t_down)/2. - fHeader->GetTStart(), "vftx", "clocktdc")
-                                : 0./0.;
-                #if 1
-                    if(fIsCalibrator) tof = (t_up+t_down)/2.;
-                    else tof = (t_up+t_down)/2. - fHeader->GetTStart() -2170.;
-                #else    
-                    tof = (t_up+t_down)/2.;
-                #endif
-                    //if(tof != tof00) return;
                     // Fill histograms for gain match, offset and sync.
-                    //cout<<"ToF "<<tof<<endl;
-                    if (fWrite /*&& cal_num == 1*/)
+                    if (fWrite)
                     {
                         fh_ToT_bottom_Fib_raw->Fill(fiber_id, tot_down);
                         fh_ToT_top_Fib_raw->Fill(fiber_id, tot_up);
@@ -470,18 +426,14 @@ void R3BFiberMAPMTCal2Hit::Exec(Option_t* option)
                     tot_up *= 20. / gainUp;
 
                     //  tof -= tsync;
-                    //cout<<"1. T_u: "<<t_up<<" T_d: "<<t_down<<" dt: "<<dtime<<" offset: "<<offsetDT<<endl;
-                     t_down += offsetDT/2.;
+                    // t_down -= offsetDown;
                     // t_down -= tsync;
-                     t_up -= offsetDT/2.;
+                    // t_up -= offsetUp;
                     // t_up -= tsync;
                     dtime -= offsetDT;
-                   // cout<<"tofb "<<tof<<" tsync "<<tsync;
                     tof -= tsync;
-                   // cout<<" tofa "<<tof<<endl;
-                    // histogram after gain match, sync....
 
-                   // cout<<"2. T_u: "<<t_up<<" T_d: "<<t_down<<" dt: "<<dtime<<" offset: "<<offsetDT<<endl<<"_______________________"<<endl;
+                    // histogram after gain match, sync....
                     if (fWrite)
                     {
                         fh_dt_Fib->Fill(fiber_id, dtime);
@@ -565,16 +517,10 @@ void R3BFiberMAPMTCal2Hit::Exec(Option_t* option)
 
                     multi++;
 
-                    //tof = fTimeStitch->GetTime((t_up + t_down)/2. - fHeader->GetTStart(), "clocktdc", "vftx");
-
                     if (!fIsCalibrator)
                     {
-                        fh_time_check_dtime->Fill(dtime,tof);
-                        if (/*(tof >= ftofmin && tof <= ftofmax ) ||*/ abs(dtime) < 11./*ns*/)
+                        if (tof >= ftofmin && tof <= ftofmax)
                         {
-                            /*As it turns out, it is far more important, to cut on the time-difference between up-down PMTs
-                            as this determines if the signals are correlated. 11ns are a back-of-the-envelope-calculation estimating the 
-                            maximum traveltime for light in the detectors. One can on top of that also cut on the ToF.*/
                             new ((*fHitItems)[fHitItems->GetEntriesFast()]) R3BFiberMAPMTHitData(
                                 fDetId, x, y, eloss, tof, fiber_id, t_down, t_up, tot_down, tot_up);
                         }
@@ -610,13 +556,13 @@ void R3BFiberMAPMTCal2Hit::FinishTask()
         fh_dt_Fib_raw->Write();
         fh_Fib_ToF_raw->Write();
         fh_time_check_tsync->Write();
-        fh_time_check_dtime->Write();
     }
 
     if (fIsCalibrator)
     {
         Bool_t Redo = false; // Add a redo flag, to redo a calibration, if Maximum falls on noise.
-        Double_t PercentOfMax = 0.9;
+        Double_t PercentOfMax = 0.5;
+
         R3BFiberMAPMTHitModulePar* mpar;
 
         for (UInt_t i = 1; i <= fNumFibers; i++)
@@ -624,7 +570,6 @@ void R3BFiberMAPMTCal2Hit::FinishTask()
             mpar = new R3BFiberMAPMTHitModulePar();
             mpar->SetFiber(i);
             fCalPar->AddModulePar(mpar);
-            
         }
 
         Int_t loopctr = 0;
@@ -658,7 +603,7 @@ void R3BFiberMAPMTCal2Hit::FinishTask()
                         R3BFiberMAPMTHitModulePar* par = fCalPar->GetModuleParAt(i);
                         par->SetGainDown(proj->GetBinCenter(j));
 
-                        { R3BLOG(info, fName << " fiberId: " << i << ",gainDown: " << proj->GetBinCenter(j));}
+                        R3BLOG(info, fName << " fiberId: " << i << ",gainDown: " << proj->GetBinCenter(j));
                         if (Redo == true)
                         {
                             PartMax = proj->GetMaximum() * PercentOfMax;
@@ -695,7 +640,7 @@ void R3BFiberMAPMTCal2Hit::FinishTask()
                     {
                         R3BFiberMAPMTHitModulePar* par1 = fCalPar->GetModuleParAt(i);
                         par1->SetGainUp(proj1->GetBinCenter(j));
-                        if(i<10) {R3BLOG(info, fName << " fiberId: " << i << ",gainUp: " << proj1->GetBinCenter(j));}
+                        R3BLOG(info, fName << " fiberId: " << i << ",gainUp: " << proj1->GetBinCenter(j));
                         break;
                     }
                 }
@@ -714,17 +659,12 @@ void R3BFiberMAPMTCal2Hit::FinishTask()
             // proj2->Write();
 
             // tsync
-            R3BFiberMAPMTHitModulePar* par3 = fCalPar->GetModuleParAt(i);
+            // R3BFiberMAPMTHitModulePar* par3 = fCalPar->GetModuleParAt(i);
             auto proj3 = (TH1F*)fh_Fib_ToF_raw->ProjectionY("", i, i, 0);
             auto sync = proj3->GetXaxis()->GetBinCenter(proj3->GetMaximumBin());
-            cout<<"tsync mx bin: "<<sync<<endl;
-            TF1* fGauss2 = new TF1("fgaus2", "gaus", sync - 8., sync + 8.);
-            proj2->Fit("fgaus2", "QR0");
-            auto offsetsync = fGauss2->GetParameter(1);
-            par3->SetSync(offsetsync);
+            par2->SetSync(sync);
 
-           {R3BLOG(info, fName << " fiberId: " << i << ", offset_DT: " << offsetdt << ", sync: " << offsetsync);}
-           
+            R3BLOG(info, fName << " fiberId: " << i << ", offset_DT: " << offsetdt << ", sync: " << sync);
         }
 
         fCalPar->setChanged();

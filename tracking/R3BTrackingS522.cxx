@@ -391,7 +391,6 @@ void R3BTrackingS522::Exec(Option_t* option){
 			TVector3 rpc(rpc_X[N_glob_tracks], rpc_Y[N_glob_tracks], rpc_Z[N_glob_tracks]);
 			TVector3 vec_PoQ(TX0[N_glob_tracks], TY0[N_glob_tracks], 1);
 			vec_PoQ.SetMag(PoQ[N_glob_tracks]);
-			AddTrackData(rpc,dx,dy, TX0[N_glob_tracks], TY0[N_glob_tracks], vec_PoQ, Beta[N_glob_tracks],  Gamma[N_glob_tracks],  FlightPath[N_glob_tracks]);
 
 			if (DoAlignment && mul_f15==1 && mul_f16==1 && mul_rpc==1 && PoQ[N_glob_tracks]>1.744 && PoQ[N_glob_tracks]<1.750 && counter_align<100)
 			{
@@ -489,7 +488,7 @@ bool R3BTrackingS522::MakeOutgoingTracks(){
 		tr.rpc_x = rpc_point.X();
 		tr.rpc_y = rpc_point.Y();
 		tr.rpc_z = rpc_point.Z();
-		tr.rpc_tof = (rpc_hit->GetTof() + 28.1768 + 29.1053 );
+		tr.rpc_tof = (rpc_hit->GetTof() + 28.1768 + 29.1868 );
 		rpc_tof_i = tr.rpc_tof;
 		//tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 22.8272);
 		N_out_tracks++;
@@ -606,14 +605,6 @@ void R3BTrackingS522::TransformPoint1(TVector3& point1, TVector3 rot1, TVector3 
 	point1.Transform(r1);
 	point1 += (trans1);
 	return;
-}
-
-R3BRpcTrack* R3BTrackingS522::AddTrackData(TVector3 mw, Double_t dx, Double_t dy, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath)
-{
-	// Filling output track info
-	TClonesArray& clref = *fTrackItems;
-	Int_t size = clref.GetEntriesFast();
-	return new (clref[size]) R3BRpcTrack(mw.X(), mw.Y(), mw.Z(), dx, dy, TX, TY, poq.X(), poq.Y(), poq.Z(), beta, gamma, flightPath);
 }
 
 // Setup energy cuts in foot and fibers 

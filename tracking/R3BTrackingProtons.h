@@ -45,13 +45,6 @@ class R3BTrackingProtons : public FairTask
 		virtual void FinishEvent();
 		virtual void FinishTask();
 
-		// GLAD current which was used for training MDF function
-		// Should  be set form the steering macro
-		void SetGladReferenceCurrent(Double_t cur) { GladReferenceCurrent = cur; }
-
-		// GLAD current in the run being anlaysed, set from steering macro
-		void SetGladCurrent(Double_t cur)          { GladCurrent = cur; }
-
 		// Set MDF functions from the steering macro
 		void Set_MDF_PoQ(TString name)             { MDF_PoQ_filename = name; }
 		void Set_MDF_FlightPath(TString name)      { MDF_FlightPath_filename = name; }
@@ -78,10 +71,6 @@ class R3BTrackingProtons : public FairTask
 		void SetPositionRpc(double x, double y, double z)     { rpc_position.SetXYZ(x, y, z);}// cm
 		void SetEulerAnglesRpc(double x, double y, double z)  { rpc_angles.SetXYZ(x, y, z);  }// rad
 
-		//Tofd
-		void SetPositionTofd(double x, double y, double z)     { tofd_position.SetXYZ(x, y, z);}// cm
-		void SetEulerAnglesTofd(double x, double y, double z)  { tofd_angles.SetXYZ(x, y, z);  }// rad
-
 		// Get lab positions and angles (needed by alignment function)
 		inline TVector3 GetPositionMwpc0()     { return m0_position;   } // cm
 		inline TVector3 GetPositionMwpc1()     { return m1_position;   } // cm
@@ -101,7 +90,6 @@ class R3BTrackingProtons : public FairTask
 
 		// Transofrming input detector hit (point) into laboratory system
 		void TransformPoint  (TVector3& point, TVector3* rotation, TVector3* translation);
-		void TransformPoint1 (TVector3& point1, TVector3 rotation1, TVector3 translation1);
 		// Setup energy cuts in foot and fibers 
 		void SetFootEnergyMinMax(double min, double max);
 
@@ -128,13 +116,6 @@ class R3BTrackingProtons : public FairTask
 		vector<UInt_t> f2_hits={};
 		TVector3 m0_point, m1_point, f1_point, f2_point, rpc_point;
 		TVector3 m0_point_i, m1_point_i, f1_point_i, f2_point_i, rpc_point_i;
-		//Input vertex vector
-    		vector <double> *x_vm_t = new vector <double>();
-    		vector <double> *y_vm_t = new vector <double>();
-    		vector <double> *z_vm_t = new vector <double>();
-    		vector <double> *dm_t = new vector <double>();
-    		vector <double> *opa_f_t = new vector <double>();
-    		TTree *vt;
 		double rpc_tof={0},rpc_tof_i={0};
 		bool IsGoodFootHit(R3BFootHitData* fhit);
 		bool SortFootData();
@@ -146,7 +127,6 @@ class R3BTrackingProtons : public FairTask
 		// do not change the order, add new det in the end
 		enum DetectorInstances
 		{
-			DET_TOFD,
 			FOOT_HITDATA,
 			MWPC0_HITDATA,
 			MWPC1_HITDATA,
@@ -157,11 +137,9 @@ class R3BTrackingProtons : public FairTask
 			DET_MAX
 		};
 
-#define NOF_FIB_DET (DET_FI_LAST - DET_FI_FIRST + 1)
-
 		// Names of essential branches in the input tree
 		// do not change the order! add new data in the end
-		const char* fDetectorNames[DET_MAX + 1] = {"TofdHit", "FootHitData", "Mwpc0HitData", "Mwpc1HitData", "FrsData", "R3BRpcHitData", "LosHit", "MusliHitData", NULL };
+		const char* fDetectorNames[DET_MAX + 1] = {"FootHitData", "Mwpc0HitData", "Mwpc1HitData", "FrsData", "R3BRpcHitData", "LosHit", "MusliHitData", NULL };
 
 		R3BEventHeader* fHeader;
 		std::vector<TClonesArray*> fDataItems; // input data
@@ -172,12 +150,6 @@ class R3BTrackingProtons : public FairTask
 		TRotation r;
 		TVector3 v3_localX;
 		TVector3 v3_localZ;
-		TRotation r1;
-		TVector3 v3_localX1;
-		TVector3 v3_localZ1;
-
-		TVector3 los_position;
-		TVector3 los_angles;
 
 		TVector3 m0_position;
 		TVector3 m1_position;
@@ -191,9 +163,6 @@ class R3BTrackingProtons : public FairTask
 
 		TVector3 rpc_position;
 		TVector3 rpc_angles;
-
-		TVector3 tofd_position;
-		TVector3 tofd_angles;
 
 		R3BMDFWrapper* MDF_FlightPath;
 		R3BMDFWrapper* MDF_PoQ;
@@ -210,10 +179,6 @@ class R3BTrackingProtons : public FairTask
 		Int_t fTrigger;
 		Int_t fTpat;
 		Int_t maxevent;
-		Double_t GladCurrent;
-		Double_t GladReferenceCurrent;
-		Double_t reference_PoQ;
-		Bool_t DoAlignment;
 		Double_t tof_offset; // ns
 
 		// Energy range in FOOT 
@@ -233,7 +198,6 @@ class R3BTrackingProtons : public FairTask
 		UInt_t mul_f1={};
 		UInt_t mul_f2={};
 		UInt_t mul_rpc={};
-		UInt_t mul_tofd={};
 		UInt_t mul_foot={};
 		vector <double> vtx;
                 vector <double> vty;
@@ -284,20 +248,12 @@ class R3BTrackingProtons : public FairTask
 		Float_t rpc_Z[N_glob_tracks_max]={};
 		Float_t rpc_T[N_glob_tracks_max]={};
 
-		Float_t tofd_X[N_glob_tracks_max]={};
-		Float_t tofd_Y[N_glob_tracks_max]={};
-		Float_t tofd_Z[N_glob_tracks_max]={};
-		Float_t tofd_Q[N_glob_tracks_max]={};
-		Float_t tofd_T[N_glob_tracks_max]={};
-		Float_t tofd_ID[N_glob_tracks_max]={};
-
-
 		// Essential constants
 		const Double_t SPEED_OF_LIGHT = 29.9792458; // cm/ns
 		const Double_t AMU = 0.9314940038;          // GeV/c2
 
 		// Private method to fill output track data
-		R3BRpcTrack* AddTrackData(TVector3 mw, Double_t dx, Double_t dy, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath);
+		R3BRpcTrack* AddTrackData(TVector3 mw, Double_t dx, Double_t dy, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath, Double_t AoZ, Double_t mul);
 
 	public:
 		ClassDef(R3BTrackingProtons, 1)

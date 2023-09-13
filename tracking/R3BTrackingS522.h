@@ -381,7 +381,6 @@ class R3BTrackingS522 : public FairTask
     const Double_t AMU = 0.9314940038;          // GeV/c2
 
     // Private method to fill output track data
-    R3BRpcTrack* AddTrackData(TVector3 mw, Double_t dx, Double_t dy, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath);
 
   public:
     ClassDef(R3BTrackingS522, 1)

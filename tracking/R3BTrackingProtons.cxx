@@ -67,14 +67,10 @@ R3BTrackingProtons::R3BTrackingProtons(const char* name, Int_t iVerbose)
 	, fTpat(-1)
 	, fNEvents(0)
 	, maxevent(0)
-	  , DoAlignment(false)
 	, fTrackItems(new TClonesArray("R3BRpcTrack"))
-	, reference_PoQ(0.)
-	, GladCurrent(-1)
-	, GladReferenceCurrent(-1)
 	, FootEnergyMin(-1)
 	, FootEnergyMax(-1)
-	  , fHeader(nullptr)
+	, fHeader(nullptr)
 {
 }
 
@@ -107,12 +103,10 @@ InitStatus R3BTrackingProtons::Init()
 		{
 			R3BLOG(fatal, Form("\n\n Cannot find tree branch %s \n\n", fDetectorNames[det]));
 		}
-		//mgr->Register(Form("%s", fDetectorNames[det]), std::to_string(det).c_str(), fDataItems[det], true);
 	}
 
 	// check if all cuts are properly set
-	if (GladCurrent < 0 || GladReferenceCurrent < 0 || 
-			FootEnergyMin < 0 || FootEnergyMax < 0) 
+	if (FootEnergyMin < 0 || FootEnergyMax < 0) 
 	{
 		R3BLOG(fatal, Form(" Some cuts are not set or negative values are used\n\n"));
 	}
@@ -141,7 +135,6 @@ InitStatus R3BTrackingProtons::Init()
 	tree_out.Branch("mul_foot"     , &mul_foot      , "mul_foot/i");
 	tree_out.Branch("mul_f1"       , &mul_f1        , "mul_f1/i");
 	tree_out.Branch("mul_f2"       , &mul_f2        , "mul_f2/i");
-	tree_out.Branch("mul_tofd"     , &mul_tofd      , "mul_tofd/i");
 	tree_out.Branch("mul_los"      , &mul_los       , "mul_los/i");
 
 	tree_out.Branch("Tpat"         , &Tpat          , "Tpat/I");
@@ -185,41 +178,7 @@ InitStatus R3BTrackingProtons::Init()
 	tree_out.Branch("rpc_Z"        , rpc_Z          , "rpc_Z[N_glob_tracks]/F");
 	tree_out.Branch("rpc_T"        , rpc_T          , "rpc_T[N_glob_tracks]/F");
 
-	tree_out.Branch("tofd_Q"       , tofd_Q         , "tofd_Q[N_glob_tracks]/F");
-
-	TFile*in =  new TFile("/u/mxarepe/worky/Tracking/tracking_Ar/V_140_nopid.root","READ");    	
-	if(in){std::cout<<"File Found" << std::endl;} 
-	if(!in){std::cout<<"File Not Found" << std::endl;} 
-	vt = (TTree*)in->Get("vertex");
-	if(vt){std::cout<< "Tree Found"<<std::endl;}
-	if(!vt){std::cout<< "Tree Not Found"<<std::endl;}
-	int nevents = vt->GetEntries();
-	std::cout << "Number Of Raw Events: "<< nevents << std::endl; 
-	vt->SetBranchAddress("Z_vertex_m_t",&z_vm_t);
-	vt->SetBranchAddress("Y_vertex_m_t",&y_vm_t);
-	vt->SetBranchAddress("X_vertex_m_t",&x_vm_t);
-	vt->SetBranchAddress("Dist_m_t",&dm_t);
-	vt->SetBranchAddress("Opening_angle_Foot_t",&opa_f_t);
-        nevents=0;
-	for(int i=0; i<nevents; i++){
-		vt->GetEntry(i);
-		if(x_vm_t->size()>0){
-			vtx.push_back(x_vm_t->at(0));
-			vty.push_back(y_vm_t->at(0));
-			vtz.push_back(z_vm_t->at(0));
-			distm.push_back(dm_t->at(0));
-			opan.push_back(opa_f_t->at(0));
-		}
-		if(x_vm_t->size()==0){
-			vtx.push_back(-999.);
-			vty.push_back(-999.);
-			vtz.push_back(-999.);
-			distm.push_back(-999.);
-			opan.push_back(-999.);
-		}
-	}
-	// Request storage of R3BTrack data in the output tree
-	mgr->Register("MDFTracks", "MDFTracks data", fTrackItems, kTRUE);
+	mgr->Register("MDFRpcTracks", "MDFRpcTracks data", fTrackItems, kTRUE);
 	return kSUCCESS;
 }
 
@@ -243,68 +202,28 @@ void R3BTrackingProtons::Exec(Option_t* option){
 	mul_los  = fDataItems[DET_LOS]->GetEntries();
 	mul_foot = fDataItems[FOOT_HITDATA]->GetEntries();
 	mul_rpc  = fDataItems[DET_RPC]->GetEntries();
-	mul_tofd = fDataItems[DET_TOFD]->GetEntries();
-
-	//cout << "\n mul_m0 : " << mul_m0; 
-	//cout << "\n mul_m1 : " << mul_m1; 
-	//cout << "\n mul_los : " << mul_los; 
-	//cout << "\n mul_foot : " << mul_foot; 
-	//cout << "\n mul_rpc : " << mul_rpc; 
-	//cout << "\n mul_tofd : " << mul_tofd; 
-
 
 	if(mul_m0!=1 || mul_m1!=1 || mul_foot<1 || mul_los != 1 || mul_rpc==0) return;//for now take only mul=1 in mwpcs
 
-	//cout << "\n mul_m0 after : " << mul_m0 << endl; 
-	//cout << "\n mul_m1 after : " << mul_m1 << endl; 
-	//cout << "\n mul_los after : " << mul_los << endl; 
-	//cout << "\n mul_foot after : " << mul_foot << endl; 
-	//cout << "\n mul_rpc after : " << mul_rpc << endl; 
-	//cout << "\n mul_tofd after : " << mul_tofd << endl;    
-
 	//FRS data
-	auto frs_DataItems = fDataItems.at(FRS_DATA);
-	if(frs_DataItems->GetEntries() < 1) return; 
-	auto frs_data = static_cast<R3BFrsData*>(frs_DataItems->At(0));
-	if(frs_data->GetBrho()<17.5 || frs_data->GetBrho()>17.7) return;
-	if(frs_data->GetZ()<5.2 || frs_data->GetZ()>6.7) return;
-	//------ Get TOFD data 
-	R3BTofdHitData* tofd_hit{};
-	bool is_good_tofd = false;
-	for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
-	{
-		tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
-		if (tofd_hit->GetDetId() == 1) // only hits from first plane
-		{
-			is_good_tofd = true;
-			break;
-		}
-	}
-	if(!is_good_tofd){ 
-		cout<<"Bad_tofd"<<endl; 
-		return;
-	}
-	if(!MakeIncomingTracks()){ 
-		cout<<"Bad_incoming"<<endl; 
-		return;//at least one good track candidate in FOOT
-	}
+	//auto frs_DataItems = fDataItems.at(FRS_DATA);
+	//if(frs_DataItems->GetEntries() < 1) return; 
+	//auto frs_data = static_cast<R3BFrsData*>(frs_DataItems->At(0));
+	//cout << frs_data->GetBrho() << " " << frs_data->GetZ() << endl;
+	//if(frs_data->GetBrho()<17.5 || frs_data->GetBrho()>17.7) return;
+	//if(frs_data->GetZ()<5.2 || frs_data->GetZ()>6.7) return;
 	if(!MakeOutgoingTracks()){ 
-		cout<<"Bad_outgoing"<<endl; 
+	//	cout<<"Bad_outgoing"<<endl; 
 		return;//at least one good track candidate in Rpc
 	}
-	// if(mul_f1>10 || mul_f2>10 || mul_f15>10 || mul_f16 >10) return;
-
+	if(!MakeIncomingTracks()){ 
+	//	cout<<"Bad_incoming"<<endl; 
+		return;//at least one good track candidate in FOOT
+	}
+	//if(mul_f1>5 || mul_f2>5) return;
 	good_ev=1;
-
-	double a=0,b=0,c=0;
-	double delta_TY0, delta_TX0;
-	// cout << "new event" << endl;
-	//for (auto & tin : tracks_in){
-	//	a++;
-		b=0;
+	for (auto & tin : tracks_in){
 		for (auto & tout : tracks_out){
-			b++;
-			//preserve the order, it is expected by the MDF function!
 			mdf_data[0] = tin.f2_y;
 			mdf_data[1] = tin.f2_z;
 			mdf_data[2] = tin.f1_x;
@@ -313,7 +232,6 @@ void R3BTrackingProtons::Exec(Option_t* option){
 			mdf_data[5] = tout.rpc_y;
 			mdf_data[6] = tout.rpc_z;
 			mdf_data[7] = tout.rpc_tof;
-
 			// Calculate all required MDF values
 
 			TVector3 vertex_foot;//projection to the center of the target (0,0,0)
@@ -324,14 +242,6 @@ void R3BTrackingProtons::Exec(Option_t* option){
 
 			double dx = vertex_foot.X() - tin.vertex_mwpc_X;
 			double dy = vertex_foot.Y() - tin.vertex_mwpc_Y;
-			//   cout << " delta : " << dx << " " << dy << endl;
-			//   cout << " counters : " << a << " " << b << " " << c << endl;
-			//   cout << " Foot : "  << tin.f2_y << " " << tin.f2_z << " " << tin.f1_x << " " << tin.f1_z << endl;
-			//   cout << " RPC : " << tout.rpc_x << " " << tout.rpc_y << " " << tout.rpc_z << " " << tout.rpc_tof << endl;
-			//   cout << " vertex_foot : "  <<  vertex_foot.X() << " " << vertex_foot.Y() << endl;
-			//   cout << " vertex_mwpc : "  <<  tin.vertex_mwpc_X << " " << tin.vertex_mwpc_Y << endl;
-			//   if(dy <-3. || dy>-1.){continue;}
-			c++;
 			vertex_mwpc_X[N_glob_tracks] = tin.vertex_mwpc_X;
 			vertex_mwpc_Y[N_glob_tracks] = tin.vertex_mwpc_Y;
 			vertex_foot_X[N_glob_tracks] = vertex_foot.X();
@@ -339,7 +249,7 @@ void R3BTrackingProtons::Exec(Option_t* option){
 			dx_vertex[N_glob_tracks] = dx;
 			dy_vertex[N_glob_tracks] = dy;
 
-			PoQ[N_glob_tracks] = MDF_PoQ->MDF(mdf_data) * GladCurrent / GladReferenceCurrent;
+			PoQ[N_glob_tracks] = MDF_PoQ->MDF(mdf_data);
 			FlightPath[N_glob_tracks] = MDF_FlightPath->MDF(mdf_data);
 			TX0[N_glob_tracks] = MDF_TX0->MDF(mdf_data);
 			TY0[N_glob_tracks] = MDF_TY0->MDF(mdf_data);
@@ -360,19 +270,17 @@ void R3BTrackingProtons::Exec(Option_t* option){
 			rpc_Y[N_glob_tracks]   = tout.rpc_y;
 			rpc_Z[N_glob_tracks]   = tout.rpc_z;
 			rpc_T[N_glob_tracks]   = tout.rpc_tof;
-			tofd_Q[N_glob_tracks] = tofd_hit->GetEloss();
-			N_glob_tracks++;
 
 			TVector3 rpc(rpc_X[N_glob_tracks], rpc_Y[N_glob_tracks], rpc_Z[N_glob_tracks]);
 			TVector3 vec_PoQ(TX0[N_glob_tracks], TY0[N_glob_tracks], 1);
 			vec_PoQ.SetMag(PoQ[N_glob_tracks]);
 
+			AddTrackData(rpc, dx, dy, TX0[N_glob_tracks], TY0[N_glob_tracks], vec_PoQ, Beta[N_glob_tracks],  Gamma[N_glob_tracks],  FlightPath[N_glob_tracks], mdf_AoZ[N_glob_tracks], N_glob_tracks);
 
-			AddTrackData(rpc,dx,dy, TX0[N_glob_tracks], TY0[N_glob_tracks], vec_PoQ, Beta[N_glob_tracks],  Gamma[N_glob_tracks],  FlightPath[N_glob_tracks]);
-
+			N_glob_tracks++;
 			if(N_glob_tracks == N_glob_tracks_max) return;
 		}
-//	}
+	}
 	return;
 }
 
@@ -431,9 +339,6 @@ bool R3BTrackingProtons::SortFootData()
 }
 
 bool R3BTrackingProtons::MakeOutgoingTracks(){
-	if(fDataItems[DET_RPC]->GetEntriesFast()==0 || fDataItems[DET_RPC]->GetEntriesFast()==0){
-		return false;
-	}
 	tracks_out.clear();
 	Track tr;
 	N_out_tracks=0;
@@ -445,7 +350,8 @@ bool R3BTrackingProtons::MakeOutgoingTracks(){
 		tr.rpc_x = rpc_point.X();
 		tr.rpc_y = rpc_point.Y();
 		tr.rpc_z = rpc_point.Z();
-		tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 22.8272);
+
+		tr.rpc_tof = (rpc_hit->GetTof() + 42.2 + 23.1578) + tof_offset;
 		N_out_tracks++;
 		tracks_out.push_back(tr);
 	}
@@ -455,9 +361,6 @@ bool R3BTrackingProtons::MakeOutgoingTracks(){
 
 bool R3BTrackingProtons::MakeIncomingTracks()
 {
-	if(fDataItems[MWPC0_HITDATA]->GetEntriesFast()==0 || fDataItems[MWPC1_HITDATA]->GetEntriesFast()==0){ 
-		return false;
-	}
 	tracks_in.clear();
 	N_in_tracks=0;
 	if(!SortFootData()) return false;//at least 1 hit in every FOOT
@@ -474,7 +377,6 @@ bool R3BTrackingProtons::MakeIncomingTracks()
 	//Fill output tree variables
 	m0_X = m0_point.X();  m0_Y = m0_point.Y();  m0_Z = m0_point.Z();
 	m1_X = m1_point.X();  m1_Y = m1_point.Y();  m1_Z = m1_point.Z();
-	//cout<<"m0_x--> "<<m0_X<<endl;
 	//------- Project mwpc track to the center of the target
 	tx_in = (m0_point.X() - m1_point.X())/(m0_point.Z() - m1_point.Z());
 	ty_in = (m0_point.Y() - m1_point.Y())/(m0_point.Z() - m1_point.Z()); 
@@ -489,7 +391,7 @@ bool R3BTrackingProtons::MakeIncomingTracks()
 		TransformPoint(f2_point,  &f2_angles,  &f2_position);
 		for (auto & f1 : f1_hits){
 			auto f1_hit = static_cast<R3BFootHitData*>(fDataItems[FOOT_HITDATA]->At(f1));
-			f1_point.SetXYZ((-1.) * f1_hit->GetPosLab().X() * 0.1, 0, 0); //cm
+			f1_point.SetXYZ(f1_hit->GetPosLab().X() * 0.1, 0, 0); //cm
 			f1_point_i=f1_point;
 			TransformPoint(f1_point,  &f1_angles,  &f1_position);       
 			//project foot track to the center of the target
@@ -507,6 +409,7 @@ bool R3BTrackingProtons::MakeIncomingTracks()
 		}
 	}
 	if(tracks_in.empty()) return false;
+	//if(abs(vertex_mwpc.X()>50) || abs(vertex_mwpc.Y()>50)) return false;
 	else return true;
 }
 
@@ -529,12 +432,12 @@ void R3BTrackingProtons::TransformPoint(TVector3& point, TVector3* rot, TVector3
 	return;
 }
 
-R3BRpcTrack* R3BTrackingProtons::AddTrackData(TVector3 mw, Double_t dx, Double_t dy, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath)
+R3BRpcTrack* R3BTrackingProtons::AddTrackData(TVector3 mw, Double_t dx, Double_t dy, Double_t TX, Double_t TY, TVector3 poq, Double_t beta, Double_t gamma, Double_t flightPath, Double_t AoZ, Double_t mul)
 {
 	// Filling output track info
 	TClonesArray& clref = *fTrackItems;
 	Int_t size = clref.GetEntriesFast();
-	return new (clref[size]) R3BRpcTrack(mw.X(), mw.Y(), mw.Z(), dx, dy, TX, TY, poq.X(), poq.Y(), poq.Z(), beta, gamma, flightPath);
+	return new (clref[size]) R3BRpcTrack(mw.X(), mw.Y(), mw.Z(), dx, dy, TX, TY, poq, beta, gamma, flightPath, AoZ, mul);
 }
 
 // Setup energy cuts in foot and fibers 

@@ -20,6 +20,7 @@
 #define R3BRPCTRACK_H
 
 #include "TObject.h"
+#include "TVector3.h"
 
 class R3BRpcTrack : public TObject
 {
@@ -32,12 +33,12 @@ class R3BRpcTrack : public TObject
              Double_t dy,
              Double_t TX,
              Double_t TY,
-             Double_t px,
-             Double_t py,
-             Double_t pz,
+             TVector3 PoQ,
              Double_t Beta,
              Double_t Gamma,
-             Double_t FlighPath
+             Double_t FlighPath,
+             Double_t AoZ,
+             Double_t mul
              );
     virtual ~R3BRpcTrack();
 
@@ -48,12 +49,12 @@ class R3BRpcTrack : public TObject
     inline const Double_t& Getdy() const { return fdy; }
     inline const Double_t& GetTX() const { return fTX; }
     inline const Double_t& GetTY() const { return fTY; }
-    inline const Double_t& GetPx() const { return fPx; }
-    inline const Double_t& GetPy() const { return fPy; }
-    inline const Double_t& GetPz() const { return fPz; }
+    inline const TVector3& GetPoQ() const { return fPoQ; }
     inline const Double_t& GetBeta() const { return fBeta; }
     inline const Double_t& GetGamma() const { return fGamma; }
     inline const Double_t& GetFlightPath() const { return fFlightPath; }
+    inline const Double_t& GetAoZ() const { return fAoZ; }
+    inline const Double_t& GetMul() const { return fMul; }
 
   protected:
     Double_t fX;
@@ -63,12 +64,12 @@ class R3BRpcTrack : public TObject
     Double_t fdy;
     Double_t fTX;
     Double_t fTY;
-    Double_t fPx;
-    Double_t fPy;
-    Double_t fPz;
+    TVector3 fPoQ;
     Double_t fGamma;
     Double_t fBeta;
     Double_t fFlightPath;
+    Double_t fAoZ;
+    Double_t fMul;
 
   public:
     ClassDef(R3BRpcTrack, 1)

@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2019 GSI Helmholtzzentrum für Schwerionenforschung GmbH    *
- *   Copyright (C) 2019 Members of R3B Collaboration                          *
+ *   Copyright (C) 2019-2023 Members of R3B Collaboration                     *
  *                                                                            *
  *             This software is distributed under the terms of the            *
  *                 GNU General Public Licence (GPL) version 3,                *
@@ -14,7 +14,7 @@
 #ifndef R3BFIBERMAPMTCAL2HIT_H
 #define R3BFIBERMAPMTCAL2HIT_H 1
 
-#include "TClonesArray.h"
+#include <TClonesArray.h>
 #include "FairTask.h"
 #include <list>
 
@@ -137,7 +137,6 @@ class R3BFiberMAPMTCal2Hit : public FairTask
     TClonesArray* fCalItems;
     TClonesArray* fCalTriggerItems;
     TClonesArray* fHitItems;
-    TClonesArray* fHitLos;
     R3BFiberMappingPar* fMapPar;
     R3BFiberMAPMTHitPar* fCalPar; /**< Parameter container. */
     R3BFiberMAPMTHitPar* fHitPar; /**< Hit parameter container. */
@@ -158,7 +157,6 @@ class R3BFiberMAPMTCal2Hit : public FairTask
     TH2F* fh_time_check_tsync;
     TH1F* fh_multi;
     TH2F* fh_time_bottom_Fib;
-    TH2F* fh_time_check_dtime;
 
   public:
     ClassDef(R3BFiberMAPMTCal2Hit, 3)

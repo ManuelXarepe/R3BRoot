@@ -75,6 +75,7 @@ wrData/R3BWRData.cxx
 trloiiData/R3BTrloiiData.cxx
 R3BHit.cxx
 R3BTrack.cxx
+R3BTrackS522.cxx
 R3BDouble.cxx
 xballData/R3BXBallPoint.cxx
 xballData/R3BXBallCrystalHit.cxx
@@ -200,6 +201,7 @@ rpcData/R3BRpcCalData.cxx
 rpcData/R3BRpcHitData.cxx
 rpcData/R3BRpcPoint.cxx
 rpcData/R3BRpcTrack.cxx
+R3BTrackS522.cxx
 mwpcData/R3BMwpcPoint.cxx
 mwpcData/R3BMwpcMappedData.cxx
 mwpcData/R3BMwpcCalData.cxx

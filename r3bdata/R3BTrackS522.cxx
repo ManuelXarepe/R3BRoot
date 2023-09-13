@@ -12,58 +12,91 @@
  ******************************************************************************/
 
 // -----------------------------------------------------------------------------
-// -----                              R3BRpcTrack                             -----
-// -----                 Created on 27.01.2022 by M.Xarepe                   -----
+// -----                              R3BTrack                             -----
+// -----                 Created on 12.03.2023 by A.Lagni for S522  -----
 // -----------------------------------------------------------------------------
 
-#include "R3BRpcTrack.h"
+#include "R3BTrackS522.h"
 
-R3BRpcTrack::R3BRpcTrack()
-	: fX(0.)
+R3BTrackS522::R3BTrackS522()
+	: fTR(0.)
+	, fTL(0.)
+	, fPR(0.)
+	, fPL(0.)
+	, fER(0.)
+	, fEL(0.)
+	, fX(0.)
 	, fY(0.)
 	, fZ(0.)
-	, fdx(0.)
-	, fdy(0.)
-	, fTX(0.)
-	, fTY(0.)
-	, fPoQ(0.,0.,0.)
-	, fBeta(0)
-	, fGamma(0.)
-	, fFlightPath(0.)
+	, fPx(0.)
+	, fPy(0.)
+	, fPz(0.)
+	, fVx(0.)
+	, fVy(0.)
+	, fVz(0.)
+	, fOpa(0)
+	, fQ(0)
 	, fAoZ(0.)
-	  ,fMul(0.)
+	, fMul(0.)
+	, fChix(0.)
+	, fToFm(0.)
+	, fFlightPathm(0.)
+	, fChiy(0.)
+	  , fQuality(0.)
 {
 }
 
-R3BRpcTrack::R3BRpcTrack(Double_t x,
+R3BTrackS522::R3BTrackS522(Double_t tr,
+		Double_t tl,
+		Double_t pr,
+		Double_t pl,
+		Double_t er,
+		Double_t el,
+		Double_t x,
 		Double_t y,
 		Double_t z,
-		Double_t dx,
-		Double_t dy,
-		Double_t TX,
-		Double_t TY,
-		TVector3 PoQ,
-		Double_t Beta,
-		Double_t Gamma,
-		Double_t FlightPath,
+		Double_t px,
+		Double_t py,
+		Double_t pz,
+		Double_t vx,
+		Double_t vy,
+		Double_t vz,
+		Double_t opa,
+		Double_t q,
 		Double_t AoZ,
-		Double_t Mul)
-	: fX(x)
+		Int_t Mul,
+		Double_t ToFm,
+		Double_t FlightPathm,
+		Double_t chix,
+		Double_t chiy,
+		Int_t quality)
+	: fTR(tr)
+	, fTL(tl)
+	, fPR(pr)
+	, fPL(pl)
+	, fER(er)
+	, fEL(el)
+	, fX(x)
 	, fY(y)
 	, fZ(z)
-	, fdx(dx)
-	, fdy(dy)
-	, fTX(TX)
-	, fTY(TY)
-	, fPoQ(PoQ)
-	, fBeta(Beta)
-	, fGamma(Gamma)
-	, fFlightPath(FlightPath)
+	, fPx(px)
+	, fPy(py)
+	, fPz(pz)
+	, fVx(vx)
+	, fVy(vy)
+	, fVz(vz)
+	, fOpa(opa)
+	, fQ(q)
 	, fAoZ(AoZ)
-	  , fMul(Mul)
+	, fMul(Mul)
+	, fToFm(ToFm)
+	, fFlightPathm(FlightPathm)
+	, fChix(chix)
+	, fChiy(chiy)
+	  , fQuality(quality)
 {
 }
 
-R3BRpcTrack::~R3BRpcTrack() {}
+R3BTrackS522::~R3BTrackS522() {}
 
-ClassImp(R3BRpcTrack)
+ClassImp(R3BTrackS522)

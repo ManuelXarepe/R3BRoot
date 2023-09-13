@@ -21,6 +21,7 @@
 
 #pragma link C++ class R3BStack+;
 #pragma link C++ class R3BMCTrack+;
+#pragma link C++ class R3BTrackS522+;
 #pragma link C++ class R3BHit+;
 #pragma link C++ class R3BDouble+;
 #pragma link C++ class R3BTrack+;

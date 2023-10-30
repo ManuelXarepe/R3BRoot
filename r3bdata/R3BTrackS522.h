@@ -20,12 +20,17 @@
 #define R3BTrackS522_H
 
 #include "TObject.h"
+#include "TVector3.h"
 
 class R3BTrackS522 : public TObject
 {
 	public:
 		R3BTrackS522();
-		R3BTrackS522(Double_t tr,
+		R3BTrackS522(TVector3 F1,
+				TVector3 F2,
+				TVector3 F15,
+				TVector3 F16,
+				Double_t tr,
 				Double_t tl,
 				Double_t pr,
 				Double_t pl,
@@ -51,6 +56,10 @@ class R3BTrackS522 : public TObject
 				Int_t quality);
 		virtual ~R3BTrackS522();
 
+    		inline const TVector3& GetF1() const { return fF1; }
+    		inline const TVector3& GetF2() const { return fF2; }
+    		inline const TVector3& GetF15() const { return fF15; }
+    		inline const TVector3& GetF16() const { return fF16; }
 		inline const Double_t& GetTr() const { return fTR; }
 		inline const Double_t& GetTl() const { return fTL; }
 		inline const Double_t& GetPr() const { return fPR; }
@@ -77,6 +86,10 @@ class R3BTrackS522 : public TObject
 		inline const Int_t& GetQuality() const { return fQuality; }
 
 	protected:
+		TVector3 fF1;
+		TVector3 fF2;
+		TVector3 fF15;
+		TVector3 fF16;
 		Double_t fTR;
 		Double_t fTL;
 		Double_t fPR;

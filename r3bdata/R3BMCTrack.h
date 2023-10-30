@@ -87,7 +87,7 @@ class R3BMCTrack : public TObject
     /**  Array representing the number of MCPoints for this track in each subdetector. **/
     const std::array<int, kLAST + 1> fNPoints;
 
-    ClassDefOverride(R3BMCTrack, 3);
+    ClassDefOverride(R3BMCTrack, 4);
 };
 
 #endif

@@ -19,7 +19,11 @@
 #include "R3BTrackS522.h"
 
 R3BTrackS522::R3BTrackS522()
-	: fTR(0.)
+	: fF1(0.,0.,0.)
+	, fF2(0.,0.,0.)
+	, fF15(0.,0.,0.)
+	, fF16(0.,0.,0.)
+	, fTR(0.)
 	, fTL(0.)
 	, fPR(0.)
 	, fPL(0.)
@@ -46,7 +50,11 @@ R3BTrackS522::R3BTrackS522()
 {
 }
 
-R3BTrackS522::R3BTrackS522(Double_t tr,
+R3BTrackS522::R3BTrackS522(TVector3 F1,
+		TVector3 F2,
+		TVector3 F15,
+		TVector3 F16,
+		Double_t tr,
 		Double_t tl,
 		Double_t pr,
 		Double_t pl,
@@ -70,7 +78,11 @@ R3BTrackS522::R3BTrackS522(Double_t tr,
 		Double_t chix,
 		Double_t chiy,
 		Int_t quality)
-	: fTR(tr)
+	: fF1(F1)
+	, fF2(F2)
+	, fF15(F15)
+	, fF16(F16)
+	, fTR(tr)
 	, fTL(tl)
 	, fPR(pr)
 	, fPL(pl)

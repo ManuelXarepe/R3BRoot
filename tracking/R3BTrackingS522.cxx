@@ -163,10 +163,13 @@ void R3BTrackingS522::Exec(Option_t* option)
 	N_in_tracks=0;
 	N_out_tracks=0;
 	is_good_event = false;
-
+aa++;
 	Tpat = fHeader->GetTpat();//vairable in the output tree
-	if(Tpat>=64 || Tpat==0) return;//if Tpat is not set	
 
+	if(Tpat & 0x0fff)aaa++;
+
+	if(Tpat>=64 || Tpat==0) return;//if Tpat is not set	
+ab++;
 	mul_los=-999;
 	mul_m0=-999;
 	mul_m1=-999;
@@ -187,10 +190,18 @@ void R3BTrackingS522::Exec(Option_t* option)
 	mul_f31  = fDataItems[DET_FI31]->GetEntriesFast();
 	mul_f33  = fDataItems[DET_FI33]->GetEntriesFast();
 	mul_tofd = fDataItems[DET_TOFD]->GetEntriesFast();
-
-	if(mul_m0!=1 || mul_m1!=1 || mul_foot<1) return;//for now take only mul=1 in mwpcs
-	if(mul_f32<1 || mul_f30<1 || (mul_f31==0 && mul_f33==0) ||  mul_tofd<1) return;
 	if(mul_los!=1) return;
+	ac++;
+       	if(mul_tofd<1) return;
+	ad++;
+	if(mul_m0!=1)return;
+	ae++;
+        if(mul_m1!=1) return;
+	aee++;
+	if(mul_f32<1 || mul_f30<1 || (mul_f31==0 && mul_f33==0)) return;
+	af++;
+        if(mul_foot<1) return;//for now take only mul=1 in mwpcs
+	ag++;
 	//FRS data
 	//auto frs_DataItems = fDataItems.at(FRS_DATA);
 	//if(frs_DataItems->GetEntriesFast() < 1) return; 
@@ -200,7 +211,6 @@ void R3BTrackingS522::Exec(Option_t* option)
 	//if(frs_data->GetZ()<5.2 || frs_data->GetZ()>6.7) return;
 	//cout << "\nGood event!\n";
 	//------ Get TOFD data 
-	dd++;
 	R3BTofdHitData* tofd_hit{};
 	int mul_tofd1=0;
 	double tofdq_temp =0;
@@ -219,13 +229,15 @@ void R3BTrackingS522::Exec(Option_t* option)
 	if(!is_good_tofd){ 
 		return;
 	}
+	ah++;
 	if(!MakeIncomingTracks()){ 
 		return;//at least one good track candidate in FOOT
 	}
-	ee++;
+	ai++;
 	if(!MakeOutgoingTracks()){ 
 		return;//at least one good track candidate in Fibers
 	}
+	aj++;
 	//cout << "\nGood event\n";
 	is_good_event = true;
 	ff++;
@@ -386,6 +398,18 @@ void R3BTrackingS522::FinishTask()
 	ecr.clear();
 	ecl.clear();
 	//cout<<"WRITE"<<endl;
+	cout << aa << " enter" << endl;
+	cout << aaa << " onspill TPat" << endl;
+	cout << ab << " tpat foot" << endl;
+	cout << ac << " los != 1" << endl;
+	cout << ad << " tofd !=0 " << endl;
+	cout << ae << " mw0 ==1 " << endl;
+	cout << aee << " mw1 ==1 " << endl;
+	cout << af << " fiber!= 0" << endl;
+	cout << ag << " foot!= 0" << endl;
+	cout << ah << " tofd 1" << endl;
+	cout << ai << " there are incoming tracks" << endl;
+	cout << aj << " there are outgoing tracks" << endl;
 	//cout << "\n\n------- Statisitcs summary --------- ";
 }
 

@@ -131,6 +131,19 @@ class R3BTrackingS522 : public FairTask
     R3BMDFWrapper* Get_MDF_TX0() { return MDF_TX0; }
     R3BMDFWrapper* Get_MDF_TY0() { return MDF_TY0; }
 
+    int aa=0;
+    int aaa=0;
+    int ab=0;
+    int ac=0;
+    int ad=0;
+    int ae=0;
+    int aee=0;
+    int af=0;
+    int ag=0;
+    int ah=0;
+    int ai=0;
+    int aj=0;
+
     void SetTofOffset(double offset) { tof_offset = offset; } // ns
 
     // Transofrming input detector hit (point) into laboratory system

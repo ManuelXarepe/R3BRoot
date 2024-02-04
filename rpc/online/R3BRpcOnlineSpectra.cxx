@@ -263,6 +263,12 @@ InitStatus R3BRpcOnlineSpectra::Init()
 
     tofPosCanvas = new TCanvas("tof_Pos_Canvas", "ToF_Pos_Correlations");
 
+    tofCorrCanvasNB = new TCanvas("tof_Corr_CanvasNB", "ToF_CorrelationsNB");
+    NBTofCanvas = new TCanvas("NB_Tof_CanvasNB", "NB_ToF_CorrelationsNB");
+    NBTofCanvas->Divide(2, 2);
+
+    tofPosCanvasNB = new TCanvas("tof_Pos_CanvasNB", "ToF_Pos_CorrelationsNB");
+
     /* ------ Strip Bar Correlations ------------*/
     timeDiffStripPmtCanvas = new TCanvas("time_Diff_Strip_Pmt_Canvas", "Time_Differences");
     timeDiffStripPmtCanvas->Divide(5, 9);
@@ -278,21 +284,6 @@ InitStatus R3BRpcOnlineSpectra::Init()
 
     /* ----- Map Histograms -----*/
 
-    // stripCoarseRightHisto = R3B::root_owned<TH1F>*[41];
-    // stripFineRightHisto = R3B::root_owned<TH1F>*[41];
-
-    // stripCoarseLeftHisto = R3B::root_owned<TH1F>*[41];
-    // stripFineLeftHisto = R3B::root_owned<TH1F>*[41];
-
-    // pmtCoarseHistoTop = R3B::root_owned<TH1F>*[4];
-    // pmtFineHistoTop = R3B::root_owned<TH1F>*[4];
-
-    // pmtCoarseHistoBottom = R3B::root_owned<TH1F>*[4];
-    // pmtFineHistoBottom = R3B::root_owned<TH1F>*[4];
-
-    // refCoarseHisto = R3B::root_owned<TH1F>*[9];
-    // refFineHisto = R3B::root_owned<TH1F>*[9];
-
     stripCoarseLeftCorr =
         R3B::root_owned<TH2F>("strip_Coarse_Left", " Strip_Vs_Coarse_Time:Left", 41, 0.5, 41.5, 400, 0, 2500);
     stripCoarseRightCorr =
@@ -303,11 +294,6 @@ InitStatus R3BRpcOnlineSpectra::Init()
         R3B::root_owned<TH2F>("strip_Fine_Right", " Strip_Vs_Fine_Time:Right", 41, 0.5, 41.5, 400, 0, 600);
 
     /* ----- Pre Cal Histograms ----- */
-    //    pmtPreCalTimeHistoTop = R3B::root_owned<TH1F>*[4];
-    //    pmtPreCalTotHistoTop = R3B::root_owned<TH1F>*[4];
-    //
-    //    pmtPreCalTimeHistoBottom = R3B::root_owned<TH1F>*[4];
-    //    pmtPreCalTotHistoBottom = R3B::root_owned<TH1F>*[4];
 
     stripLeftTotCorr = R3B::root_owned<TH2F>(
         "strip_Left_Tot_Corr", "Strip_Vs_Tot:Left", 41, 0.5, 41.5, fRpcToTBins, fLeftRpcToTLim, fRightRpcToTLim);
@@ -320,12 +306,12 @@ InitStatus R3BRpcOnlineSpectra::Init()
 
     /* ----- Cal Histograms ----- */
     stripCalTimeCorr =
-        R3B::root_owned<TH2F>("strip_Cal_Time_Corr", "Strip:Time_Left_Vs_Time_Right", 800, -680, -580, 800, -800, -600);
+        R3B::root_owned<TH2F>("strip_Cal_Time_Corr", "Strip:Time_Left_Vs_Time_Right", 5000, -3100, -2950, 5000,-3100, -2950);
     stripCalToTCorr =
-        R3B::root_owned<TH2F>("strip_Cal_ToT_Corr", "Strip:ToT_Left_Vs_ToT_Right", 400, -100, -350, 400, -100, 350);
+        R3B::root_owned<TH2F>("strip_Cal_ToT_Corr", "Strip:ToT_Left_Vs_ToT_Right", 1000, -10, 50, 1000, -10, 50);
 
     /* ------------- HIT Histograms ------------ */
-    stripPosHitCorr = R3B::root_owned<TH2F>("strip_Pos_Hit_Corr", "Strip_Vs_Position", 150, 0, 1500, 41, 0.5, 41.5);
+    stripPosHitCorr = R3B::root_owned<TH2F>("strip_Pos_Hit_Corr", "Strip_Vs_Position", 150, -1000, 1500, 41, 0.5, 41.5);
     totalChargeHist = R3B::root_owned<TH1F>("total_Charge_Hist", "Charge", 1000, -100, 400);
     meanChargeCorr = R3B::root_owned<TH2F>("mean_Charge_Corr", "Heat_Map:Mean_Charge", 50, 0, 1500, 41, 0.5, 41.5);
 
@@ -333,19 +319,19 @@ InitStatus R3BRpcOnlineSpectra::Init()
         R3B::root_owned<TH2F>("tof_Vs_Pos_Corr", "ToF_Vs_Position", 600, 0, 1500, fTofBins, fLeftTofLim, fRightTofLim);
     tofCorr = R3B::root_owned<TH2F>("tof_Corr", "ToF_Vs_Strip", fTofBins, fLeftTofLim, fRightTofLim, 41, 0.5, 41.5);
 
-    // stripTofHisto = R3B::root_owned<TH1F>*[41];
-
-    // timeDiffStripPmtHisto = R3B::root_owned<TH1F>*[41];
+    tofVsPosCorrNB =
+        R3B::root_owned<TH2F>("tof_Vs_Pos_CorrNB", "ToF_Vs_PositionNB", 600, 0, 1500, fTofBins, fLeftTofLim, fRightTofLim);
+    tofCorrNB = R3B::root_owned<TH2F>("tof_CorrNB", "ToF_Vs_NB", fTofBins, fLeftTofLim, fRightTofLim, 4, 0.5, 4.5);
 
     timeDiffStripPmtCorr = R3B::root_owned<TH2F>(
-        "time_Diff_Strip_Pmt_Corr", "Time_Differences_Strip_and_Bar ", 1000, -1000, -1000, 41, 0.5, 41.5);
+        "time_Diff_Strip_Pmt_Corr", "Time_Differences_Strip_and_Bar ", 1000, 0, 300, 41, 0.5, 41.5);
     deltaTVsPosCorr =
-        R3B::root_owned<TH2F>("deltaT_Vs_Pos_Corr", "Time_Difference_Vs_Position", 300, 0, 1500, 1000, -1000, 1000);
+        R3B::root_owned<TH2F>("deltaT_Vs_Pos_Corr", "Time_Difference_Vs_Position", 300, -500, 1500, 1000, -50, 200);
     posRpcVsPosBar =
-        R3B::root_owned<TH2F>("pos_Rpc_Vs_Pos_Bar", "Rpc_Position_Vs_Bar_Position", 300, 0, 1500, 500, -1000, 3000);
+        R3B::root_owned<TH2F>("pos_Rpc_Vs_Pos_Bar", "Rpc_Position_Vs_Bar_Position", 300, -500, 1500, 500, -1000, 3000);
 
     stripIdVsNHitsCorr =
-        R3B::root_owned<TH2F>("strip_Id_Vs_N_Hits_Corr", "Hits_Vs_Strip_ID(Good_Beam)", 21, -0.5, 20.5, 41, 0.5, 41.5);
+        R3B::root_owned<TH2F>("strip_Id_Vs_N_Hits_Corr", "Hits_Vs_Strip_ID(Good_Beam)", 21, 0.5, 20.5, 41, 0.5, 41.5);
 
     stripMultHisto = R3B::root_owned<TH1F>("strip_Mult_Histo", "Strips:H_Bar_AND_Start", 41, 0.5, 41.5);
 
@@ -380,11 +366,12 @@ InitStatus R3BRpcOnlineSpectra::Init()
         stripTofHisto[i] = R3B::root_owned<TH1F>(name, name, fTofBins, fLeftTofLim, fRightTofLim);
 
         sprintf(name, "Time_Strip-Time_Bar_2:Strip_%i", i + 1);
-        timeDiffStripPmtHisto[i] = R3B::root_owned<TH1F>(name, name, 200, -70, -20);
+        timeDiffStripPmtHisto[i] = R3B::root_owned<TH1F>(name, name, 4000, 100, 175);
     }
 
-    for (Int_t i = 0; i < 8; i++)
+    for (Int_t i = 0; i < 4; i++)
     {
+
         sprintf(name, "Coarse_Time_Pmt_%i_TOP", i + 1);
         pmtCoarseHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 3000);
 
@@ -396,10 +383,6 @@ InitStatus R3BRpcOnlineSpectra::Init()
 
         sprintf(name, "ToT_Pmt_%i_TOP", i + 1);
         pmtPreCalTotHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
-    }
-
-    for (Int_t i = 0; i < 8; i++)
-    {
 
         sprintf(name, "Coarse_Time_Pmt_%i_BOTTOM", i + 1);
         pmtCoarseHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 3000);
@@ -412,6 +395,10 @@ InitStatus R3BRpcOnlineSpectra::Init()
 
         sprintf(name, "ToT_Pmt_%i_BOTTOM", i + 1);
         pmtPreCalTotHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
+
+	sprintf(name, "ToF:NB_%i", i + 1);
+        NBTofHisto[i] = R3B::root_owned<TH1F>(name, name, fTofBins, fLeftTofLim, fRightTofLim);
+
     }
 
     for (Int_t i = 0; i < 9; i++)
@@ -543,12 +530,25 @@ InitStatus R3BRpcOnlineSpectra::Init()
     tofCorr->Draw("COLZ");
     stripVsTofFolder->Add(tofCorrCanvas);
 
+    tofCorrNB->GetXaxis()->SetTitle("ToF (ps)");
+    tofCorrNB->GetYaxis()->SetTitle("Strip Number");
+    tofCorrCanvasNB->cd();
+    tofCorrNB->Draw("COLZ");
+    stripVsTofFolder->Add(tofCorrCanvasNB);
+
     tofVsPosCorr->GetXaxis()->SetTitle("Pos (mm)");
     tofVsPosCorr->GetYaxis()->SetTitle("ToF (ps)");
     tofPosCanvas->cd();
     tofVsPosCorr->Draw("COLZ");
 
     stripVsTofFolder->Add(tofPosCanvas);
+
+    tofVsPosCorrNB->GetXaxis()->SetTitle("Pos (mm)");
+    tofVsPosCorrNB->GetYaxis()->SetTitle("ToF (ps)");
+    tofPosCanvasNB->cd();
+    tofVsPosCorrNB->Draw("COLZ");
+
+    stripVsTofFolder->Add(tofPosCanvasNB);
 
     timeDiffStripPmtCorr->GetXaxis()->SetTitle("Time Difference (ns)");
     timeDiffStripPmtCorr->GetYaxis()->SetTitle("Strip Number");
@@ -616,7 +616,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
 
     stripBarCorrFolder->Add(posRpcCorrCanvas);
 
-    for (Int_t i = 0; i < 8; i++)
+    for (Int_t i = 0; i < 4; i++)
     {
 
         pmtCoarseHistoTop[i]->GetXaxis()->SetTitle("Coarse Time");
@@ -658,7 +658,14 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtPreCalTotHistoBottom[i]->GetYaxis()->SetTitle("Counts");
         pmtPreCalTotCanvas->cd(i + 1 + 4);
         pmtPreCalTotHistoBottom[i]->Draw();
+
+	NBTofHisto[i]->GetXaxis()->SetTitle("ToF (ns)");
+        NBTofHisto[i]->GetYaxis()->SetTitle("Counts");
+        NBTofCanvas->cd(i + 1);
+        NBTofHisto[i]->Draw();
+
     }
+
 
     for (Int_t i = 0; i < 9; i++)
     {
@@ -706,6 +713,8 @@ InitStatus R3BRpcOnlineSpectra::Init()
     stripFineLeftCorr->Draw("COLZ");
     stripLeftFolder->Add(stripFineLeftCorrCanvas);
 
+    stripVsTofFolder->Add(NBTofCanvas);
+
     FairRunOnline* run = FairRunOnline::Instance();
     run->GetHttpServer()->Register("", this);
     run->AddObject(mainfol);
@@ -738,13 +747,14 @@ void R3BRpcOnlineSpectra::Reset_RPC_Histo()
         refCoarseHisto[i]->Reset();
     }
 
-    for (Int_t i = 0; i < 8; i++)
+    for (Int_t i = 0; i < 4; i++)
     {
 
         pmtFineHistoTop[i]->Reset();
         pmtCoarseHistoTop[i]->Reset();
         pmtFineHistoBottom[i]->Reset();
         pmtCoarseHistoBottom[i]->Reset();
+        NBTofHisto[i]->Reset();
     }
 
     stripCoarseLeftCorr->Reset();
@@ -980,12 +990,14 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
         Float_t pos, charge;
         Int_t bin;
 
-        Float_t barTime = 0.0;
-        Float_t barID = 0.0;
-        Float_t sciPos = 0.0;
+        Float_t barTime_H = 0.0;
+        Float_t barTime_V = 0.0;
+        Float_t barID_H = 0.0;
+        Float_t sciPos_H = 0.0;
         Int_t StripCounter = 0;
 
-        Bool_t goodBar = kFALSE;
+        Bool_t good_HBar = kFALSE;
+        Bool_t good_VBar = kFALSE;
 
         for (Int_t ihit = 0; ihit < nStripHits; ihit++)
         {
@@ -1000,15 +1012,17 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
             if (detId == 1 && channelId == 2)
             {
 
-                goodBar = kTRUE;
-                barTime = hit->GetTime();
-                sciPos = hit->GetPos();
+                good_HBar = kTRUE;
+                barTime_H = hit->GetTime();
+                sciPos_H = hit->GetPos();
                 fBarHits++;
                 hBarEffHisto_H->Fill(pos);
             }
 
             if (detId == 1 && channelId == 1)
             {
+                good_VBar = kTRUE;
+		barTime_V = hit->GetTime();
                 hBarEffHisto_V1->Fill(pos);
             }
 
@@ -1023,52 +1037,63 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
         for (Int_t ihit = 0; ihit < nStripHits; ihit++)
         {
 
-            R3BRpcHitData* hit = dynamic_cast<R3BRpcHitData*>(fHitDataItems->At(ihit));
-            detId = hit->GetDetId();
-            channelId = hit->GetChannelId();
-            pos = hit->GetPos();
-            charge = hit->GetCharge();
+		R3BRpcHitData* hit = dynamic_cast<R3BRpcHitData*>(fHitDataItems->At(ihit));
+		detId = hit->GetDetId();
+		channelId = hit->GetChannelId();
+		pos = hit->GetPos();
+		charge = hit->GetCharge();
 
-            if (detId == 1)
-                continue;
+		if (detId == 1){
 
-            StripCounter++;
+			Double_t NB_tof = hit->GetTof();
 
-            stripMultiplicityArray[channelId - 1] += 1;
+			NBTofHisto[channelId - 1]->Fill(NB_tof);
 
-            Double_t rpc_tof = hit->GetTof();
+			tofCorrNB->Fill(NB_tof, channelId);
 
-            stripTofHisto[channelId - 1]->Fill(rpc_tof);
+			tofVsPosCorrNB->Fill(pos, NB_tof);
+		}
 
-            tofCorr->Fill(rpc_tof, channelId);
+		else{
 
-            tofVsPosCorr->Fill(pos, rpc_tof);
+			StripCounter++;
 
-            if (goodBar)
-            {
+			stripMultiplicityArray[channelId - 1] += 1;
 
-                timeDiffStripPmtHisto[channelId - 1]->Fill(hit->GetTime() - barTime);
-                timeDiffStripPmtCorr->Fill(hit->GetTime() - barTime, channelId);
+			Double_t rpc_tof = hit->GetTof();
 
-                posRpcVsPosBar->Fill(pos, sciPos);
-                deltaTVsPosCorr->Fill(pos, hit->GetTime() - barTime);
-                stripMultHisto->Fill(channelId);
-            }
+			stripTofHisto[channelId - 1]->Fill(rpc_tof);
 
-            stripPosHitCorr->Fill(pos, channelId);
-            totalChargeHist->Fill(hit->GetCharge());
-            counts++;
+			tofCorr->Fill(rpc_tof, channelId);
 
-            bin = Int_t(50 - (1500 - pos) / 30.0 + 1);
+			tofVsPosCorr->Fill(pos, rpc_tof);
 
-            if (charge >= 0.0 && bin <= 50 && bin > 0)
-            {
+			if (good_HBar)
+			{
+				posRpcVsPosBar->Fill(pos, sciPos_H);
+				deltaTVsPosCorr->Fill(pos, hit->GetTime() - barTime_H);
+				stripMultHisto->Fill(channelId);
+			}
+			if (good_VBar)
+			{
+				timeDiffStripPmtHisto[channelId - 1]->Fill(hit->GetTime() - barTime_H);
+				timeDiffStripPmtCorr->Fill(hit->GetTime() - barTime_V, channelId);
+			}
+			stripPosHitCorr->Fill(pos, channelId);
+			totalChargeHist->Fill(hit->GetCharge());
+			counts++;
 
-                meanCharges[channelId - 1][bin - 1] = meanCharges[channelId - 1][bin - 1] +
-                                                      (1.0 / counts) * (charge - meanCharges[channelId - 1][bin - 1]);
+			bin = Int_t(50 - (1500 - pos) / 30.0 + 1);
 
-                meanChargeCorr->SetBinContent(bin, channelId, meanCharges[channelId - 1][bin - 1]);
-            }
+			if (charge >= 0.0 && bin <= 50 && bin > 0)
+			{
+
+				meanCharges[channelId - 1][bin - 1] = meanCharges[channelId - 1][bin - 1] +
+					(1.0 / counts) * (charge - meanCharges[channelId - 1][bin - 1]);
+
+				meanChargeCorr->SetBinContent(bin, channelId, meanCharges[channelId - 1][bin - 1]);
+			}
+		}
         }
 
         for (Int_t ihit = 0; ihit < nStripHits; ihit++)
@@ -1090,8 +1115,10 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
                 hStripEffHisto_V2->Fill(pos);
         }
 
-        for (int i = 0; i < 41; i++)
+        for (int i = 0; i < 41; i++){
+	    if(stripMultiplicityArray[i] == 0){continue;}
             stripIdVsNHitsCorr->Fill(stripMultiplicityArray[i], i + 1);
+	}
 
         if (fNEvents % 1000 == 0)
         {

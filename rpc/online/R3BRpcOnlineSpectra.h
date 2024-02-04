@@ -187,10 +187,10 @@ class R3BRpcOnlineSpectra : public FairTask
     TH2F* stripRightTimeCorr;
     TH2F* stripLeftBanana;
     TH2F* stripRightBanana;
-    TH1F* pmtPreCalTimeHistoTop[8];
-    TH1F* pmtPreCalTotHistoTop[8];
-    TH1F* pmtPreCalTimeHistoBottom[8];
-    TH1F* pmtPreCalTotHistoBottom[8];
+    TH1F* pmtPreCalTimeHistoTop[4];
+    TH1F* pmtPreCalTotHistoTop[4];
+    TH1F* pmtPreCalTimeHistoBottom[4];
+    TH1F* pmtPreCalTotHistoBottom[4];
 
     /* ----- Pre Cal Canvases ----- */
     TCanvas* stripLeftTotCorrCanvas;
@@ -222,11 +222,18 @@ class R3BRpcOnlineSpectra : public FairTask
     TH2F* tofCorr;
     TH1F* stripTofHisto[41];
     TH2F* tofVsPosCorr;
+    TH2F* tofCorrNB;
+    TH1F* NBTofHisto[4];
+    TH2F* tofVsPosCorrNB;
 
     /* ------ ToF Correlations Canvases ------*/
     TCanvas* tofCorrCanvas;
     TCanvas* stripTofCanvas;
     TCanvas* tofPosCanvas;
+
+    TCanvas* tofCorrCanvasNB;
+    TCanvas* NBTofCanvas;
+    TCanvas* tofPosCanvasNB;
 
     /* ------ Strip - Bar Correlation -----*/
     TCanvas* timeDiffStripPmtCanvas;

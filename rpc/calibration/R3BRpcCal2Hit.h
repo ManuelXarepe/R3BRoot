@@ -70,8 +70,6 @@ class R3BRpcCal2Hit : public FairTask
 
     TArrayF* fParCont1;
     TArrayF* fParCont2;
-    TArrayF* fParCont3;
-    TArrayF* fParCont4;
 
     Bool_t fOnline; // Selector for online data storage
     // Parameter class

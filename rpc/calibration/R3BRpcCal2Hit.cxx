@@ -139,8 +139,8 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
   if(tpat1>0 && isnan(fR3BEventHeader->GetTStart())){continue;}
   if(iDetector==0){
    if(tpat1>0){ 
-    if(map1->GetTimeL_T() < -3210 || map1->GetTimeL_T() > -3160){continue;}
-    if(map1->GetTimeR_B() < -3210 || map1->GetTimeR_B() > -3160){continue;}
+    if(map1->GetTimeL_T() < -3500 || map1->GetTimeL_T() > -2500){continue;}
+    if(map1->GetTimeR_B() < -3500 || map1->GetTimeR_B() > -2500){continue;}
    }
    if(map1->GetTotR_B() >=  charge_right){
        charge_right=map1->GetTotR_B();
@@ -162,8 +162,8 @@ void R3BRpcCal2Hit::Exec(Option_t* opt)
    }
   }
   if(iDetector==1){
-   if(map1->GetTimeL_T() < -3200 || map1->GetTimeL_T() > -3100){continue;}
-   if(map1->GetTimeR_B() < -3200 || map1->GetTimeR_B() > -3100){continue;}
+   if(map1->GetTimeL_T() < -3500 || map1->GetTimeL_T() > -2500){continue;}
+   if(map1->GetTimeR_B() < -3500 || map1->GetTimeR_B() > -2500){continue;}
    double position_NB = (map1->GetTimeR_B()-map1->GetTimeL_T())*CSCINT/2. 
            -(fParCont1->GetAt(41 + map1->GetChannelId() -1) - 2500);
    double charge_NB = pow((map1->GetTotR_B()* map1->GetTotL_T()),0.5);

@@ -36,6 +36,7 @@
 #include "TFolder.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include <TRandom.h>
 
 #include "TClonesArray.h"
 #include "THttpServer.h"
@@ -311,7 +312,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
         R3B::root_owned<TH2F>("strip_Cal_ToT_Corr", "Strip:ToT_Left_Vs_ToT_Right", 1000, -10, 50, 1000, -10, 50);
 
     /* ------------- HIT Histograms ------------ */
-    stripPosHitCorr = R3B::root_owned<TH2F>("strip_Pos_Hit_Corr", "Strip_Vs_Position", 150, -1000, 1500, 41, 0.5, 41.5);
+    stripPosHitCorr = R3B::root_owned<TH2F>("strip_Pos_Hit_Corr", "Strip_Vs_Position", 200, -300, 1700, 123, 1, 41);
     totalChargeHist = R3B::root_owned<TH1F>("total_Charge_Hist", "Charge", 1000, -100, 400);
     meanChargeCorr = R3B::root_owned<TH2F>("mean_Charge_Corr", "Heat_Map:Mean_Charge", 50, 0, 1500, 41, 0.5, 41.5);
 
@@ -324,7 +325,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
     tofCorrNB = R3B::root_owned<TH2F>("tof_CorrNB", "ToF_Vs_NB", fTofBins, fLeftTofLim, fRightTofLim, 4, 0.5, 4.5);
 
     timeDiffStripPmtCorr = R3B::root_owned<TH2F>(
-        "time_Diff_Strip_Pmt_Corr", "Time_Differences_Strip_and_Bar ", 1000, 0, 300, 41, 0.5, 41.5);
+        "time_Diff_Strip_Pmt_Corr", "Time_Differences_Strip_and_Bar ", 1000, -50, 200, 41, 0.5, 41.5);
     deltaTVsPosCorr =
         R3B::root_owned<TH2F>("deltaT_Vs_Pos_Corr", "Time_Difference_Vs_Position", 300, -500, 1500, 1000, -50, 200);
     posRpcVsPosBar =
@@ -366,17 +367,17 @@ InitStatus R3BRpcOnlineSpectra::Init()
         stripTofHisto[i] = R3B::root_owned<TH1F>(name, name, fTofBins, fLeftTofLim, fRightTofLim);
 
         sprintf(name, "Time_Strip-Time_Bar_2:Strip_%i", i + 1);
-        timeDiffStripPmtHisto[i] = R3B::root_owned<TH1F>(name, name, 4000, 100, 175);
+        timeDiffStripPmtHisto[i] = R3B::root_owned<TH1F>(name, name, 1000, -50, 200);
     }
 
     for (Int_t i = 0; i < 4; i++)
     {
 
         sprintf(name, "Coarse_Time_Pmt_%i_TOP", i + 1);
-        pmtCoarseHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 3000);
+        pmtCoarseHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 2200);
 
         sprintf(name, "Fine_Time_Pmt_%i_TOP", i + 1);
-        pmtFineHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 3000);
+        pmtFineHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
 
         sprintf(name, "Time_Pmt_%i_TOP", i + 1);
         pmtPreCalTimeHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
@@ -385,10 +386,10 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtPreCalTotHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
 
         sprintf(name, "Coarse_Time_Pmt_%i_BOTTOM", i + 1);
-        pmtCoarseHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 3000);
+        pmtCoarseHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 2200);
 
         sprintf(name, "Fine_Time_Pmt_%i_BOTTOM", i + 1);
-        pmtFineHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 3000);
+        pmtFineHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
 
         sprintf(name, "Time_Pmt_%i_BOTTOM", i + 1);
         pmtPreCalTimeHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
@@ -405,10 +406,10 @@ InitStatus R3BRpcOnlineSpectra::Init()
     {
 
         sprintf(name, "Coarse_Time_Ref_%i", i + 1);
-        refCoarseHisto[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 3000);
+        refCoarseHisto[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 2200);
 
         sprintf(name, "Fine_Time_Ref_%i", i + 1);
-        refFineHisto[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 3000);
+        refFineHisto[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
     }
 
     for (Int_t i = 0; i < 41; i++)
@@ -1079,7 +1080,7 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
 				timeDiffStripPmtHisto[channelId - 1]->Fill(hit->GetTime() - barTime_H);
 				timeDiffStripPmtCorr->Fill(hit->GetTime() - barTime_V, channelId);
 			}
-			stripPosHitCorr->Fill(pos, channelId);
+			stripPosHitCorr->Fill(pos, channelId + gRandom->Rndm());
 			totalChargeHist->Fill(hit->GetCharge());
 			counts++;
 

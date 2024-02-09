@@ -37,6 +37,7 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include <TRandom.h>
+#include "R3BCoarseTimeStitch.h"
 
 #include "TClonesArray.h"
 #include "THttpServer.h"
@@ -140,6 +141,8 @@ InitStatus R3BRpcOnlineSpectra::Init()
         R3BLOG(fatal, "RpcHitData not found");
         return kFATAL;
     }
+    
+    fTimeStitch = new R3BCoarseTimeStitch();
 
     char name[100];
     /*
@@ -242,6 +245,8 @@ InitStatus R3BRpcOnlineSpectra::Init()
     stripRightTotCorrCanvas = new TCanvas("Right:Strip_Vs_Tot", "strip_Vs_Tot");
     stripLeftTimeCorrCanvas = new TCanvas("Left:Strip_Vs_Time", "strip_Vs_Time");
     stripRightTimeCorrCanvas = new TCanvas("Right:Strip_Vs_Time", "strip_Vs_Time");
+    stripLeftTofCorrCanvas = new TCanvas("Left:Strip_Vs_Tof", "strip_Vs_Tof");
+    stripRightTofCorrCanvas = new TCanvas("Right:Strip_Vs_Tof", "strip_Vs_Tof");
 
     pmtPreCalTimeCanvas = new TCanvas("Pmt_PreCal_Time", "pmt_Pre_Cal_Time");
     pmtPreCalTimeCanvas->Divide(4, 2);
@@ -304,6 +309,10 @@ InitStatus R3BRpcOnlineSpectra::Init()
         "strip_Left_Time_Corr", "Strip_Vs_Time:Left", 41, 0.5, 41.5, fRpcTimeBins, fLeftRpcTimeLim, fRightRpcTimeLim);
     stripRightTimeCorr = R3B::root_owned<TH2F>(
         "strip_Right_Time_Corr", "Strip_Vs_Time:Right", 41, 0.5, 41.5, fRpcTimeBins, fLeftRpcTimeLim, fRightRpcTimeLim);
+    stripLeftTofCorr = R3B::root_owned<TH2F>(
+        "strip_Left_Tof_Corr", "Strip_Vs_Tof:Left", 41, 0.5, 41.5, fRpcTimeBins, 100, 200);
+    stripRightTofCorr = R3B::root_owned<TH2F>(
+        "strip_Right_Tof_Corr", "Strip_Vs_Tof:Right", 41, 0.5, 41.5, fRpcTimeBins, 100, 200);
 
     /* ----- Cal Histograms ----- */
     stripCalTimeCorr =
@@ -497,6 +506,18 @@ InitStatus R3BRpcOnlineSpectra::Init()
     stripRightTimeCorrCanvas->cd();
     stripRightTimeCorr->Draw("COLZ");
     stripRightPreCalFolder->Add(stripRightTimeCorrCanvas);
+
+    stripLeftTofCorr->GetXaxis()->SetTitle("Strip Number");
+    stripLeftTofCorr->GetYaxis()->SetTitle("Time");
+    stripLeftTofCorrCanvas->cd();
+    stripLeftTofCorr->Draw("COLZ");
+    stripLeftPreCalFolder->Add(stripLeftTofCorrCanvas);
+
+    stripRightTofCorr->GetXaxis()->SetTitle("Strip Number");
+    stripRightTofCorr->GetYaxis()->SetTitle("Time");
+    stripRightTofCorrCanvas->cd();
+    stripRightTofCorr->Draw("COLZ");
+    stripRightPreCalFolder->Add(stripRightTofCorrCanvas);
 
     stripCalTimeCorr->GetXaxis()->SetTitle("Left Time");
     stripCalTimeCorr->GetYaxis()->SetTitle("Right Time");
@@ -941,12 +962,14 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
                 {
                     stripLeftTotCorr->Fill(hit->GetChannelId(), hit->GetTot());
                     stripLeftTimeCorr->Fill(hit->GetChannelId(), hit->GetTime());
+                    stripLeftTofCorr->Fill(hit->GetChannelId(), fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"));
                 }
                 if (side == 1)
                 {
 
                     stripRightTotCorr->Fill(hit->GetChannelId(), hit->GetTot());
                     stripRightTimeCorr->Fill(hit->GetChannelId(), hit->GetTime());
+                    stripRightTofCorr->Fill(hit->GetChannelId(), fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"));
                 }
             }
 
@@ -1239,6 +1262,8 @@ void R3BRpcOnlineSpectra::FinishTask()
         stripRightTotCorrCanvas->Write();
         stripLeftTimeCorrCanvas->Write();
         stripRightTimeCorrCanvas->Write();
+        stripLeftTofCorrCanvas->Write();
+        stripRightTofCorrCanvas->Write();
     }
 }
 

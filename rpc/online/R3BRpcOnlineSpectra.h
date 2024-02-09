@@ -35,6 +35,7 @@
 
 class TClonesArray;
 class R3BEventHeader;
+class R3BCoarseTimeStitch;
 class TH1F;
 class TH2F;
 
@@ -138,6 +139,7 @@ class R3BRpcOnlineSpectra : public FairTask
     Float_t fStrip21Hits;
 
     R3BEventHeader* header; // Event header.
+    R3BCoarseTimeStitch* fTimeStitch;
     Int_t fTrigger;         // Trigger value.
     Int_t fNEvents;         // Event counter.
 
@@ -185,6 +187,8 @@ class R3BRpcOnlineSpectra : public FairTask
     TH2F* stripRightTotCorr;
     TH2F* stripLeftTimeCorr;
     TH2F* stripRightTimeCorr;
+    TH2F* stripLeftTofCorr;
+    TH2F* stripRightTofCorr;
     TH2F* stripLeftBanana;
     TH2F* stripRightBanana;
     TH1F* pmtPreCalTimeHistoTop[4];
@@ -197,6 +201,8 @@ class R3BRpcOnlineSpectra : public FairTask
     TCanvas* stripRightTotCorrCanvas;
     TCanvas* stripLeftTimeCorrCanvas;
     TCanvas* stripRightTimeCorrCanvas;
+    TCanvas* stripLeftTofCorrCanvas;
+    TCanvas* stripRightTofCorrCanvas;
     TCanvas* stripLeftBananaCanvas;
     TCanvas* stripRightBananaCanvas;
     TCanvas* pmtPreCalTimeCanvas;

@@ -96,11 +96,9 @@ class R3BRpcOnlineSpectra : public FairTask
         fRpcToTBins = bins;
     };
 
-    void SetOnspillTPatRange(Int_t tpat1, Int_t tpat2)
+    void SetOnspillTPatMask(int mask)
     {
-
-        fFirstTPat = tpat1;
-        fLastTPat = tpat2;
+        fon_spill_mask = mask;
     };
 
     void SetTrigger(Int_t trigg) { fTrigger = trigg; }
@@ -192,9 +190,13 @@ class R3BRpcOnlineSpectra : public FairTask
     TH2F* stripLeftBanana;
     TH2F* stripRightBanana;
     TH1F* pmtPreCalTimeHistoTop[4];
+    TH1F* pmtPreCalTofHistoTop[4];
     TH1F* pmtPreCalTotHistoTop[4];
     TH1F* pmtPreCalTimeHistoBottom[4];
+    TH1F* pmtPreCalTofHistoBottom[4];
     TH1F* pmtPreCalTotHistoBottom[4];
+    TH2F* pmtPreCalTot_vs_TofHistoBottom[4];
+    TH2F* pmtPreCalTot_vs_TofHistoTop[4];
 
     /* ----- Pre Cal Canvases ----- */
     TCanvas* stripLeftTotCorrCanvas;
@@ -206,6 +208,8 @@ class R3BRpcOnlineSpectra : public FairTask
     TCanvas* stripLeftBananaCanvas;
     TCanvas* stripRightBananaCanvas;
     TCanvas* pmtPreCalTimeCanvas;
+    TCanvas* pmtPreCalTofCanvas;
+    TCanvas* pmtPreCalTot_vs_TofCanvas;
     TCanvas* pmtPreCalTotCanvas;
 
     /* ----- Cal Histograms ----- */
@@ -275,8 +279,7 @@ class R3BRpcOnlineSpectra : public FairTask
     TH1F* hStripEffHisto_V2;
     TH1F* hBarEffHisto_V2;
 
-    Int_t fFirstTPat;
-    Int_t fLastTPat;
+    Int_t fon_spill_mask;
 
     TLatex *tex1, *tex2;
 

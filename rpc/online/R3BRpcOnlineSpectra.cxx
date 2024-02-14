@@ -75,8 +75,7 @@ R3BRpcOnlineSpectra::R3BRpcOnlineSpectra(const TString& name, Int_t iVerbose)
     , fBarHits(0)
     , fStrip21Hits(0)
     , fSpill(1)
-    , fFirstTPat(1)
-    , fLastTPat(12)
+    , fon_spill_mask(0x0fff)
 {
 }
 
@@ -251,8 +250,14 @@ InitStatus R3BRpcOnlineSpectra::Init()
     pmtPreCalTimeCanvas = new TCanvas("Pmt_PreCal_Time", "pmt_Pre_Cal_Time");
     pmtPreCalTimeCanvas->Divide(4, 2);
 
+    pmtPreCalTofCanvas = new TCanvas("Pmt_PreCal_Tof", "pmt_Pre_Cal_Tof");
+    pmtPreCalTofCanvas->Divide(4, 2);
+
     pmtPreCalTotCanvas = new TCanvas("Pmt_PreCal_ToT_Time", "pmt_Pre_Cal_ToT");
     pmtPreCalTotCanvas->Divide(4, 2);
+
+    pmtPreCalTot_vs_TofCanvas = new TCanvas("Pmt_PreCal_Tot_vs_Tof", "pmt_Pre_Cal_Tot_vs_Tof");
+    pmtPreCalTot_vs_TofCanvas->Divide(4, 2);
 
     /* ----- Cal Canvases ----- */
     stripCalTimeCorrCanvas = new TCanvas("Left_Time_Vs_Right_Time", "left_Time_Vs_Right_Time");
@@ -378,7 +383,6 @@ InitStatus R3BRpcOnlineSpectra::Init()
         sprintf(name, "Time_Strip-Time_Bar_2:Strip_%i", i + 1);
         timeDiffStripPmtHisto[i] = R3B::root_owned<TH1F>(name, name, 1000, -50, 200);
     }
-
     for (Int_t i = 0; i < 4; i++)
     {
 
@@ -389,10 +393,13 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtFineHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
 
         sprintf(name, "Time_Pmt_%i_TOP", i + 1);
-        pmtPreCalTimeHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
+        pmtPreCalTimeHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -3400, -2500);
 
         sprintf(name, "ToT_Pmt_%i_TOP", i + 1);
-        pmtPreCalTotHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
+        pmtPreCalTotHistoTop[i] = R3B::root_owned<TH1F>(name, name, 2000, -550, 400);
+
+	sprintf(name, "Tof_Pmt_%i_TOP", i + 1);
+        pmtPreCalTofHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
 
         sprintf(name, "Coarse_Time_Pmt_%i_BOTTOM", i + 1);
         pmtCoarseHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 2200);
@@ -401,10 +408,19 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtFineHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
 
         sprintf(name, "Time_Pmt_%i_BOTTOM", i + 1);
-        pmtPreCalTimeHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
+        pmtPreCalTimeHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -3400, -2500);
+
+	sprintf(name, "Tof_Pmt_%i_BOTTOM", i + 1);
+        pmtPreCalTofHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 2000, -550, 400);
 
         sprintf(name, "ToT_Pmt_%i_BOTTOM", i + 1);
         pmtPreCalTotHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
+
+        sprintf(name, "ToT_vs_Tof_Pmt_%i_BOTTOM", i + 1);
+        pmtPreCalTot_vs_TofHistoBottom[i] = R3B::root_owned<TH2F>(name, name, 1000, -550, 400, 1000,0,400);
+
+	sprintf(name, "ToT_vs_Tof_Pmt_%i_TOP", i + 1);
+        pmtPreCalTot_vs_TofHistoTop[i] = R3B::root_owned<TH2F>(name, name, 1000, -550, 400, 1000,0,400);
 
 	sprintf(name, "ToF:NB_%i", i + 1);
         NBTofHisto[i] = R3B::root_owned<TH1F>(name, name, fTofBins, fLeftTofLim, fRightTofLim);
@@ -546,13 +562,13 @@ InitStatus R3BRpcOnlineSpectra::Init()
     hitMapCanvas->cd(2);
     meanChargeCorr->Draw("COLZ");
 
-    tofCorr->GetXaxis()->SetTitle("ToF (ps)");
+    tofCorr->GetXaxis()->SetTitle("ToF (ns)");
     tofCorr->GetYaxis()->SetTitle("Strip Number");
     tofCorrCanvas->cd();
     tofCorr->Draw("COLZ");
     stripVsTofFolder->Add(tofCorrCanvas);
 
-    tofCorrNB->GetXaxis()->SetTitle("ToF (ps)");
+    tofCorrNB->GetXaxis()->SetTitle("ToF (ns)");
     tofCorrNB->GetYaxis()->SetTitle("Strip Number");
     tofCorrCanvasNB->cd();
     tofCorrNB->Draw("COLZ");
@@ -656,6 +672,11 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtPreCalTimeCanvas->cd(i + 1);
         pmtPreCalTimeHistoTop[i]->Draw();
 
+	pmtPreCalTofHistoTop[i]->GetXaxis()->SetTitle("Tof");
+        pmtPreCalTofHistoTop[i]->GetYaxis()->SetTitle("Counts");
+        pmtPreCalTofCanvas->cd(i + 1);
+        pmtPreCalTofHistoTop[i]->Draw();
+
         pmtPreCalTotHistoTop[i]->GetXaxis()->SetTitle("ToT");
         pmtPreCalTotHistoTop[i]->GetYaxis()->SetTitle("Counts");
         pmtPreCalTotCanvas->cd(i + 1);
@@ -676,10 +697,25 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtPreCalTimeCanvas->cd(i + 1 + 4);
         pmtPreCalTimeHistoBottom[i]->Draw();
 
+	pmtPreCalTofHistoBottom[i]->GetXaxis()->SetTitle("Time");
+        pmtPreCalTofHistoBottom[i]->GetYaxis()->SetTitle("Counts");
+        pmtPreCalTofCanvas->cd(i + 1 + 4);
+        pmtPreCalTofHistoBottom[i]->Draw();
+
         pmtPreCalTotHistoBottom[i]->GetXaxis()->SetTitle("ToT");
         pmtPreCalTotHistoBottom[i]->GetYaxis()->SetTitle("Counts");
         pmtPreCalTotCanvas->cd(i + 1 + 4);
         pmtPreCalTotHistoBottom[i]->Draw();
+
+	pmtPreCalTot_vs_TofHistoTop[i]->GetXaxis()->SetTitle("Tof");
+        pmtPreCalTot_vs_TofHistoTop[i]->GetYaxis()->SetTitle("ToT");
+        pmtPreCalTot_vs_TofCanvas->cd(i + 1);
+        pmtPreCalTot_vs_TofHistoTop[i]->Draw("colz");
+
+	pmtPreCalTot_vs_TofHistoBottom[i]->GetXaxis()->SetTitle("Tof");
+        pmtPreCalTot_vs_TofHistoBottom[i]->GetYaxis()->SetTitle("ToT");
+        pmtPreCalTot_vs_TofCanvas->cd(i + 1 + 4);
+        pmtPreCalTot_vs_TofHistoBottom[i]->Draw("colz");
 
 	NBTofHisto[i]->GetXaxis()->SetTitle("ToF (ns)");
         NBTofHisto[i]->GetYaxis()->SetTitle("Counts");
@@ -709,7 +745,9 @@ InitStatus R3BRpcOnlineSpectra::Init()
     pmtFolder->Add(pmtFineCanvas);
 
     pmtPreCalFolder->Add(pmtPreCalTimeCanvas);
+    pmtPreCalFolder->Add(pmtPreCalTofCanvas);
     pmtPreCalFolder->Add(pmtPreCalTotCanvas);
+    pmtPreCalFolder->Add(pmtPreCalTot_vs_TofCanvas);
 
     stripCoarseRightCorr->GetXaxis()->SetTitle("Strip Number");
     stripCoarseRightCorr->GetYaxis()->SetTitle("Coarse Time");
@@ -761,6 +799,7 @@ void R3BRpcOnlineSpectra::Reset_RPC_Histo()
         stripTofHisto[i]->Reset();
         timeDiffStripPmtHisto[i]->Reset();
         stripTofHisto[i]->Reset();
+
     }
 
     for (Int_t i = 0; i < 9; i++)
@@ -777,6 +816,12 @@ void R3BRpcOnlineSpectra::Reset_RPC_Histo()
         pmtFineHistoBottom[i]->Reset();
         pmtCoarseHistoBottom[i]->Reset();
         NBTofHisto[i]->Reset();
+        pmtPreCalTimeHistoTop[i]->Reset();
+        pmtPreCalTimeHistoBottom[i]->Reset();
+        pmtPreCalTofHistoTop[i]->Reset();
+        pmtPreCalTofHistoBottom[i]->Reset();
+        pmtPreCalTot_vs_TofHistoTop[i]->Reset();
+        pmtPreCalTot_vs_TofHistoBottom[i]->Reset();
     }
 
     stripCoarseLeftCorr->Reset();
@@ -859,25 +904,15 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
         return;
     }
 
-    if (fEventHeader->GetTpat() > 0)
-    {
-        for (Int_t i = 0; i < 16; i++)
-        {
-            tpatbin = (fEventHeader->GetTpat() & (1 << i));
-            if (tpatbin != 0)
-            {
-                fTPat = i + 1;
-            }
-        }
-    }
-
     auto nMappedHits = fMappedDataItems->GetEntriesFast();
 
-    if (fSpill == 1)
-        execBool = (fTPat >= fFirstTPat && fTPat <= fLastTPat);
+    if (fSpill == 1){
+        execBool = (fEventHeader->GetTpat() & fon_spill_mask);
+    }
 
-    if (fSpill == 0)
-        execBool = !(fTPat >= fFirstTPat && fTPat <= fLastTPat);
+    if (fSpill == 0){
+        execBool = !(fEventHeader->GetTpat() & fon_spill_mask);
+    }
 
     if (execBool)
     {
@@ -979,12 +1014,16 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
                 if (side == 0)
                 {
                     pmtPreCalTimeHistoTop[hit->GetChannelId() - 1]->Fill(hit->GetTime());
+                    pmtPreCalTofHistoTop[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"));
+                    pmtPreCalTot_vs_TofHistoTop[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"),hit->GetTot());
                     pmtPreCalTotHistoTop[hit->GetChannelId() - 1]->Fill(hit->GetTot());
                 }
 
                 if (side == 1)
                 {
                     pmtPreCalTimeHistoBottom[hit->GetChannelId() - 1]->Fill(hit->GetTime());
+                    pmtPreCalTofHistoBottom[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"));
+                    pmtPreCalTot_vs_TofHistoBottom[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"),hit->GetTot());
                     pmtPreCalTotHistoBottom[hit->GetChannelId() - 1]->Fill(hit->GetTot());
                 }
             }
@@ -1100,7 +1139,7 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
 			}
 			if (good_VBar)
 			{
-				timeDiffStripPmtHisto[channelId - 1]->Fill(hit->GetTime() - barTime_H);
+				timeDiffStripPmtHisto[channelId - 1]->Fill(hit->GetTime() - barTime_V);
 				timeDiffStripPmtCorr->Fill(hit->GetTime() - barTime_V, channelId);
 			}
 			stripPosHitCorr->Fill(pos, channelId + gRandom->Rndm());

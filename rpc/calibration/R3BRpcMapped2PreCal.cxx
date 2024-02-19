@@ -242,7 +242,7 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
             Entry entry;
             entry.time =
                 fmod((5. * map1->GetCoarseTime() - times_Strip - Ref_vec[lut[iStrip - 1][map1->GetSide()][0]].time -
-                      (Ref_vec[8].time - Ref_vec[6].time) + 4 * c + c / 2),
+                      (Ref_vec[4].time - Ref_vec[6].time) + 4 * c + c / 2),
                      c) -
                 c / 2;
             entry.Mapped = map1;
@@ -278,7 +278,7 @@ void R3BRpcMapped2PreCal::Exec(Option_t* option)
 
             Entry entry;
             entry.time = fmod((5. * map1->GetCoarseTime() - times_Pmt - Ref_vec[1].time -
-                               (Ref_vec[8].time - Ref_vec[6].time) + 4 * c + c / 2),
+                               (Ref_vec[4].time - Ref_vec[6].time) + 4 * c + c / 2),
                               c) -
                          c / 2;
             entry.Mapped = map1;

@@ -321,7 +321,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
 
     /* ----- Cal Histograms ----- */
     stripCalTimeCorr =
-        R3B::root_owned<TH2F>("strip_Cal_Time_Corr", "Strip:Time_Left_Vs_Time_Right", 5000, -3100, -2950, 5000,-3100, -2950);
+        R3B::root_owned<TH2F>("strip_Cal_Time_Corr", "Strip:Time_Left_Vs_Time_Right", 5000, -3400, -2950, 5000,-3400, -2950);
     stripCalToTCorr =
         R3B::root_owned<TH2F>("strip_Cal_ToT_Corr", "Strip:ToT_Left_Vs_ToT_Right", 1000, -10, 50, 1000, -10, 50);
 
@@ -396,10 +396,10 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtPreCalTimeHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -3400, -2500);
 
         sprintf(name, "ToT_Pmt_%i_TOP", i + 1);
-        pmtPreCalTotHistoTop[i] = R3B::root_owned<TH1F>(name, name, 2000, -550, 400);
+        pmtPreCalTotHistoTop[i] = R3B::root_owned<TH1F>(name, name, 2000, 0, 400);
 
 	sprintf(name, "Tof_Pmt_%i_TOP", i + 1);
-        pmtPreCalTofHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
+        pmtPreCalTofHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -500, -100);
 
         sprintf(name, "Coarse_Time_Pmt_%i_BOTTOM", i + 1);
         pmtCoarseHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 2200);
@@ -411,16 +411,16 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtPreCalTimeHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -3400, -2500);
 
 	sprintf(name, "Tof_Pmt_%i_BOTTOM", i + 1);
-        pmtPreCalTofHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 2000, -550, 400);
+        pmtPreCalTofHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 2000, -500, -100);
 
         sprintf(name, "ToT_Pmt_%i_BOTTOM", i + 1);
-        pmtPreCalTotHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -550, 400);
+        pmtPreCalTotHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 400);
 
         sprintf(name, "ToT_vs_Tof_Pmt_%i_BOTTOM", i + 1);
-        pmtPreCalTot_vs_TofHistoBottom[i] = R3B::root_owned<TH2F>(name, name, 1000, -550, 400, 1000,0,400);
+        pmtPreCalTot_vs_TofHistoBottom[i] = R3B::root_owned<TH2F>(name, name, 1000, -500, -100, 1000, 0, 1000);
 
 	sprintf(name, "ToT_vs_Tof_Pmt_%i_TOP", i + 1);
-        pmtPreCalTot_vs_TofHistoTop[i] = R3B::root_owned<TH2F>(name, name, 1000, -550, 400, 1000,0,400);
+        pmtPreCalTot_vs_TofHistoTop[i] = R3B::root_owned<TH2F>(name, name, 1000, -500, -100, 1000, 0, 1000);
 
 	sprintf(name, "ToF:NB_%i", i + 1);
         NBTofHisto[i] = R3B::root_owned<TH1F>(name, name, fTofBins, fLeftTofLim, fRightTofLim);

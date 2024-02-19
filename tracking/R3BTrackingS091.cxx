@@ -737,7 +737,7 @@ R3BTrack* R3BTrackingS091::AddTrackData(double x, double y, double z, TVector3 p
 	// Filling output track info
 	TClonesArray& clref = *fTrackItems;
 	Int_t size = clref.GetEntriesFast();
-	return new (clref[size]) R3BTrack(x, y, z, poq.X(), poq.Y(), poq.Z(), charge, aoz, 0., 0., 0);
+	return new (clref[size]) R3BTrack(x, y, z, poq_vec.X(),  poq_vec.Y(), poq_vec.Z(), charge, aoz, 0., 0., 0);
 }
 
 ClassImp(R3BTrackingS091);

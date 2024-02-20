@@ -163,10 +163,10 @@ InitStatus R3BTrackingS091::Init()
 
 	trackerCanvas = new TCanvas("tracker_Canvas", "trackerCanvas");
 	AoQ_Vs_Q_TOFD =
-		R3B::root_owned<TH2F>("AoQ_Vs_Q_TOFD", "AoQ_Vs_Q_TOF", 1000, 0., 4, 1200, 0, 12);
+		R3B::root_owned<TH2F>("AoQ_Vs_Q_TTTX", "AoQ_Vs_Q_TTTX", 1000, 1., 5, 1200, 0, 12);
 
-	AoQ_Vs_Q_TOFD->GetXaxis()->SetTitle("Left Time");
-	AoQ_Vs_Q_TOFD->GetYaxis()->SetTitle("Right Time");
+	AoQ_Vs_Q_TOFD->GetXaxis()->SetTitle("AoQ");
+	AoQ_Vs_Q_TOFD->GetYaxis()->SetTitle("TTTX Q");
 	trackerCanvas->cd();
 	AoQ_Vs_Q_TOFD->Draw("COLZ");
 	mainfol->Add(trackerCanvas);
@@ -208,18 +208,22 @@ void R3BTrackingS091::Exec(Option_t* option)
 	mul_los   = fDataItems[LOS_DATA]->GetEntriesFast();
 	mul_m0   = fDataItems[MWPC0_HITDATA]->GetEntriesFast();
 	mul_m1   = fDataItems[MWPC1_HITDATA]->GetEntriesFast();
-	//mul_foot = fDataItems[FOOT_HITDATA]->GetEntriesFast();
+	mul_tttx = fDataItems[TTTX_HITDATA]->GetEntriesFast();
 	mul_f32  = fDataItems[DET_FI32]->GetEntriesFast();
 	mul_f30  = fDataItems[DET_FI30]->GetEntriesFast();
 	mul_f31  = fDataItems[DET_FI31]->GetEntriesFast();
 	mul_f33  = fDataItems[DET_FI33]->GetEntriesFast();
 	mul_tofd = fDataItems[DET_TOFD]->GetEntriesFast();
 	//if(mul_los!=1) return;
-	if(mul_tofd<1) return;
+	a++;
+	if(mul_tttx<1) return;
+	//if(mul_tofd<1) return;
+	b++;
 	//if(mul_m0!=1)return;
-//cout << "here m0" << endl;
 	if(mul_m1!=1) return;
+	c++;
 	if(mul_f32<1 || mul_f30<1 || (mul_f31==0 && mul_f33==0)) return;
+	d++;
 	//if(mul_foot<1) return;//for now take only mul=1 in mwpcs
 	//FRS data
 	//auto frs_DataItems = fDataItems.at(FRS_DATA);
@@ -234,34 +238,49 @@ void R3BTrackingS091::Exec(Option_t* option)
 	R3BTofdHitData* tofd_hit{};
 	int mul_tofd1=0;
 	double tofdq_temp =0;
+	double tttxq_temp =0;
 	bool is_good_tofd = false;
-	for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
+	bool is_good_tttx = false;
+//	for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
+//	{
+//		tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
+//		if (tofd_hit->GetDetId() == 1) // only hits from first plane, add Z later
+//		{
+//			is_good_tofd = true;
+//			mul_tofd1++;
+//			tofdq_temp=tofd_hit->GetEloss();
+//			//break;
+//		}
+//	}
+	for (int ihit = 0; ihit < fDataItems[TTTX_HITDATA]->GetEntriesFast(); ihit++)
 	{
-		tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
-		if (tofd_hit->GetDetId() == 1/* && tofd_hit->GetTof() > 22 && tofd_hit->GetTof() < 32*/) // only hits from first plane, add Z later
-		{
-			is_good_tofd = true;
-			mul_tofd1++;
-			tofdq_temp=tofd_hit->GetEloss();
-			//break;
+		auto hit = dynamic_cast<R3BTttxHitData*>(fDataItems[TTTX_HITDATA]->At(ihit));
+		auto idet = hit->GetDetID();
+		if(idet==1){
+			tttxq_temp = hit->GetChargeZ();
+			is_good_tttx = true;
 		}
 	}
-	if(!is_good_tofd){ 
+	if(!is_good_tttx){ 
 		return;
 	}
+	e++;
 	if(!MakeIncomingTracks()){ 
 		return;//at least one good track candidate in FOOT
 	}
+	f++;
 	if(!MakeOutgoingTracks()){ 
 		return;//at least one good track candidate in Fibers
 	}
+	g++;
 	//cout << "\nGood event\n";
 	is_good_event = true;
 	cond=true;
+	int counter = 0;
 	double delta_TX1, delta_TX0, delta_TY0;
 	for (auto & tin : tracks_in){
 		for (auto & tout : tracks_out){
-			cout << "eneterd the loop " << endl;
+			counter++;
 			//preserve the order, it is expected by the MDF function!
 			mdf_data[0] = tin.mw1_x;
 			mdf_data[1] = tin.mw1_y;
@@ -288,7 +307,9 @@ void R3BTrackingS091::Exec(Option_t* option)
 			TVector3 vec_PoQ(tx0, ty0, 1);
 			vec_PoQ.SetMag(poq);
 
-			AoQ_Vs_Q_TOFD->Fill(maoz,tofdq_temp);
+			if(counter == 1){
+				AoQ_Vs_Q_TOFD->Fill(maoz,tttxq_temp);
+			}
 
 			AddTrackData(tin.mw1_x, tin.mw1_y, tin.mw1_z, vec_PoQ, tofdq, maoz); // chix, chiy, quality
 		}
@@ -302,11 +323,16 @@ void R3BTrackingS091::FinishEvent()
 	{
 		DataItem->Clear();
 	}
+	if (fNEvents / 1000. == (int)fNEvents / 1000)
+	cout << "finish event " << a << " " << b << " " << c << " "  << d << " " << e << " " << f << " " << g << endl;
 }
 
 void R3BTrackingS091::FinishTask()
 {
 	LOG(info) << "Processed " << fNEvents << " events\n\n";
+	AoQ_Vs_Q_TOFD->Write();
+	cout << "ending " << a << " " << b << " " << c << " "  << d << " " << e << " " << f << " " << g << endl;
+
 	//cout<<"WRITE"<<endl;
 }
 
@@ -362,7 +388,6 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 		auto f32 = static_cast<R3BFiberMAPMTHitData*>(fDataItems[DET_FI32]->At(i));
 		if(!IsGoodFiberHit(f32)) continue;
 		double fitime = fTimeStitch->GetTime(f32->GetTime_ns() - fHeader->GetTStart(), "clocktdc", "vftx");
-		cout << fitime << endl;
 		if((fitime > FiberTimeMin && fitime < FiberTimeMax))
 		{	f32x.push_back(f32->GetX());
 			f32e.push_back(f32->GetEloss());
@@ -670,7 +695,7 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 				tr.last_x = flast_point.X();
 				tr.last_z = flast_point.Z();
 				angle_out = TMath::ATan((tr.last_x - tr.f32_x)/(tr.last_z - tr.f32_z)) * TMath::RadToDeg();
-				if(angle_out>(-10.) || angle_out<(-18.)) continue;
+				//if(angle_out>(-10.) || angle_out<(-18.)) continue;
 				// We need to extrapolate Z position in f30 because it was used for Y measurement
 				// Define two (X,Z) points on the f30 plane:
 				//Now track every combination of upstream and downstream tracks 
@@ -696,7 +721,7 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 				tr.last_x = flast_point.X();
 				tr.last_z = flast_point.Z();
 				angle_out = TMath::ATan((tr.last_x - tr.f32_x)/(tr.last_z - tr.f32_z)) * TMath::RadToDeg();
-				if(angle_out>(-10.) || angle_out<(-18.)) continue;
+				//if(angle_out>(-10.) || angle_out<(-18.)) continue;
 				// We need to extrapolate Z position in f30 because it was used for Y measurement
 				// Define two (X,Z) points on the f30 plane:
 				//Now track every combination of upstream and downstream tracks 

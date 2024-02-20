@@ -239,7 +239,7 @@ class R3BTrackingS091 : public FairTask
     double GladCurrent;
     double GladReferenceCurrent;
     double reference_PoQ ;
-    double FRS_BETA = 0.722379;
+    double FRS_BETA = 0.721883;
     Bool_t DoAlignment;
     double tof_offset; // ns
 
@@ -262,6 +262,14 @@ class R3BTrackingS091 : public FairTask
     int mul_foot=-999;
     int Tpat = -999;
     bool cond=false;
+
+    double a=0;
+    double b=0;
+    double c=0;
+    double d=0;
+    double e=0;
+    double f=0;
+    double g=0;
 
     double tx0 = -999;
     double ty0 = -999;

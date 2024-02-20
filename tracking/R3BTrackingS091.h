@@ -38,6 +38,7 @@
 #include <sstream>
 #include "TTree.h"
 
+class TH2F;
 class R3BTrackingS091 : public FairTask
 {
   public:
@@ -230,7 +231,7 @@ class R3BTrackingS091 : public FairTask
     TString MDF_TX1_filename;
     TString MDF_TY1_filename;
 
-    double mdf_data[8];   // data container for the MDF function
+    double mdf_data[9];   // data container for the MDF function
     unsigned long fNEvents=0; // Event counter
     int fTrigger;
     int fTpat;
@@ -238,7 +239,7 @@ class R3BTrackingS091 : public FairTask
     double GladCurrent;
     double GladReferenceCurrent;
     double reference_PoQ ;
-    double FRS_BETA;
+    double FRS_BETA = 0.722379;
     Bool_t DoAlignment;
     double tof_offset; // ns
 
@@ -277,6 +278,13 @@ class R3BTrackingS091 : public FairTask
     // Essential constants
     const double SPEED_OF_LIGHT = 29.9792458; // cm/ns
     const double AMU = 0.9314940038;          // GeV/c2
+
+    /* ----- tracker Canvases ----- */
+    TCanvas* trackerCanvas;
+
+    /* ----- tracker Histograms ----- */
+    TH2F* AoQ_Vs_Q_TOFD;
+    TH2F* AoQ_Vs_Q_TTTX;
 
     // Private method to fill output track data
     R3BTrack* AddTrackData(double x, double y, double z, TVector3 poq_vec, Double_t charge, Double_t aoz);

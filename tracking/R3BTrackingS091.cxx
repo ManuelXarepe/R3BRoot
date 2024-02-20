@@ -31,6 +31,7 @@
 #include "FairRunAna.h"
 #include "FairRunOnline.h"
 #include "FairRuntimeDb.h"
+#include "R3BShared.h"
 
 #include "TCanvas.h"
 #include "TClonesArray.h"
@@ -126,13 +127,11 @@ InitStatus R3BTrackingS091::Init()
 		R3BLOG(fatal, Form(" Some cuts are not set or negative values are used\n\n"));
 	}
 	// Initializing all MDF functions
-	MDF_FlightPath = new R3BMDFWrapper(MDF_FlightPath_filename.Data());
-
-	LOG(info) << "Reading MDF function for PoQ";
-	MDF_PoQ = new R3BMDFWrapper(MDF_PoQ_filename.Data());
-
 	LOG(info) << "Reading MDF function for TX0";
 	MDF_TX0 = new R3BMDFWrapper(MDF_TX0_filename.Data());
+
+	LOG(info) << "Reading MDF function for FlightPath";
+	MDF_FlightPath = new R3BMDFWrapper(MDF_FlightPath_filename.Data());
 
 	LOG(info) << "Reading MDF function for TY0";
 	MDF_TY0 = new R3BMDFWrapper(MDF_TY0_filename.Data());
@@ -142,6 +141,10 @@ InitStatus R3BTrackingS091::Init()
 
 	LOG(info) << "Reading MDF function for TY1";
 	MDF_TY1 = new R3BMDFWrapper(MDF_TY1_filename.Data());
+
+	LOG(info) << "Reading MDF function for PoQ";
+	MDF_PoQ = new R3BMDFWrapper(MDF_PoQ_filename.Data());
+
 
 	//Read output from the vertex macro
 	// linking to global pointer (needed by alignment)
@@ -158,12 +161,24 @@ InitStatus R3BTrackingS091::Init()
 
 	run->GetHttpServer()->RegisterCommand("Reset_tracker", Form("/Objects/%s/->Reset_Tracker_Histo()", GetName()));
 
+	trackerCanvas = new TCanvas("tracker_Canvas", "trackerCanvas");
+	AoQ_Vs_Q_TOFD =
+		R3B::root_owned<TH2F>("AoQ_Vs_Q_TOFD", "AoQ_Vs_Q_TOF", 1000, 0., 4, 1200, 0, 12);
+
+	AoQ_Vs_Q_TOFD->GetXaxis()->SetTitle("Left Time");
+	AoQ_Vs_Q_TOFD->GetYaxis()->SetTitle("Right Time");
+	trackerCanvas->cd();
+	AoQ_Vs_Q_TOFD->Draw("COLZ");
+	mainfol->Add(trackerCanvas);
+
 	return kSUCCESS; 
 }
 
 void R3BTrackingS091::Reset_Tracker_Histo(){
+	AoQ_Vs_Q_TOFD->Reset();
 	return;
-	}
+}
+
 void R3BTrackingS091::Exec(Option_t* option)
 {
 	if (fNEvents / 1000. == (int)fNEvents / 1000)
@@ -176,9 +191,9 @@ void R3BTrackingS091::Exec(Option_t* option)
 
 	Tpat = fHeader->GetTpat();//vairable in the output tree
 
-	if(Tpat & 0x0fff);
-
-	if(Tpat>=64 || Tpat==0) return;//if Tpat is not set	
+	if((Tpat & 0xf000)){
+		return;
+	}
 
 	mul_los=-999;
 	mul_m0=-999;
@@ -199,13 +214,12 @@ void R3BTrackingS091::Exec(Option_t* option)
 	mul_f31  = fDataItems[DET_FI31]->GetEntriesFast();
 	mul_f33  = fDataItems[DET_FI33]->GetEntriesFast();
 	mul_tofd = fDataItems[DET_TOFD]->GetEntriesFast();
-
 	//if(mul_los!=1) return;
 	if(mul_tofd<1) return;
-	if(mul_m0!=1)return;
+	//if(mul_m0!=1)return;
+//cout << "here m0" << endl;
 	if(mul_m1!=1) return;
 	if(mul_f32<1 || mul_f30<1 || (mul_f31==0 && mul_f33==0)) return;
-
 	//if(mul_foot<1) return;//for now take only mul=1 in mwpcs
 	//FRS data
 	//auto frs_DataItems = fDataItems.at(FRS_DATA);
@@ -224,7 +238,7 @@ void R3BTrackingS091::Exec(Option_t* option)
 	for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
 	{
 		tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
-		if (tofd_hit->GetDetId() == 1 && tofd_hit->GetTof() > 22 && tofd_hit->GetTof() < 32) // only hits from first plane, add Z later
+		if (tofd_hit->GetDetId() == 1/* && tofd_hit->GetTof() > 22 && tofd_hit->GetTof() < 32*/) // only hits from first plane, add Z later
 		{
 			is_good_tofd = true;
 			mul_tofd1++;
@@ -247,21 +261,21 @@ void R3BTrackingS091::Exec(Option_t* option)
 	double delta_TX1, delta_TX0, delta_TY0;
 	for (auto & tin : tracks_in){
 		for (auto & tout : tracks_out){
+			cout << "eneterd the loop " << endl;
 			//preserve the order, it is expected by the MDF function!
 			mdf_data[0] = tin.mw1_x;
 			mdf_data[1] = tin.mw1_y;
-			mdf_data[1] = tin.mw1_z;
-			mdf_data[2] = (tin.mw0_x - tin.mw1_x)/(tin.mw0_z - tin.mw1_z);
-			mdf_data[3] = (tin.mw0_y - tin.mw1_y)/(tin.mw0_z - tin.mw1_z);
-			mdf_data[4] = tout.f32_x;
-			mdf_data[5] = tout.f32_z;
-			mdf_data[6] = (tout.last_x - tout.f32_x)/(tout.last_z - tout.f32_z);
-			mdf_data[7] = (tout.f30_y  - tin.mw0_y)/(tout.f30_z - tin.mw0_z);
-
+			mdf_data[2] = tin.mw1_z;
+			mdf_data[3] = 0;/*(tin.mw0_x - tin.mw1_x)/(tin.mw0_z - tin.mw1_z);*/
+			mdf_data[4] = 0;/*(tin.mw0_y - tin.mw1_y)/(tin.mw0_z - tin.mw1_z);*/
+			mdf_data[5] = tout.f32_x;
+			mdf_data[6] = tout.f32_z;
+			mdf_data[7] = (tout.last_x - tout.f32_x)/(tout.last_z - tout.f32_z);
+			mdf_data[8] = (tout.f30_y  - tin.mw0_y)/(tout.f30_z - tin.mw0_z);
 			// Calculate all required MDF values
 
-			poq = MDF_PoQ->MDF(mdf_data) * GladCurrent / GladReferenceCurrent;
 			flight_p = MDF_FlightPath->MDF(mdf_data);
+			poq = MDF_PoQ->MDF(mdf_data) * GladCurrent / GladReferenceCurrent;
 			tx0 = MDF_TX0->MDF(mdf_data);
 			tx1 = MDF_TX1->MDF(mdf_data);
 			ty0 = MDF_TY0->MDF(mdf_data);
@@ -273,6 +287,8 @@ void R3BTrackingS091::Exec(Option_t* option)
 			maoz = poq / beta / gamma / AMU;
 			TVector3 vec_PoQ(tx0, ty0, 1);
 			vec_PoQ.SetMag(poq);
+
+			AoQ_Vs_Q_TOFD->Fill(maoz,tofdq_temp);
 
 			AddTrackData(tin.mw1_x, tin.mw1_y, tin.mw1_z, vec_PoQ, tofdq, maoz); // chix, chiy, quality
 		}
@@ -297,48 +313,22 @@ void R3BTrackingS091::FinishTask()
 
 bool R3BTrackingS091::MakeIncomingTracks()
 {
-	if(fDataItems[MWPC0_HITDATA]->GetEntriesFast()==0 || fDataItems[MWPC1_HITDATA]->GetEntriesFast()==0) 
-		return false;
 	tracks_in.clear();
-	double tx_in = -999;
-	double ty_in = -999; 
-	//double dx_vertex = -999;
-	//double dy_vertex = -999;
-	//double dx_angle = -999;
-	//double dy_angle = -999;	
 	TVector3 vertex_mwpc;
 	Track tr;
 	//Get MWPC hits, for now only first hit
-	auto m0_hit = static_cast<R3BMwpcHitData*>(fDataItems[MWPC0_HITDATA]->At(0));
 	auto m1_hit = static_cast<R3BMwpcHitData*>(fDataItems[MWPC1_HITDATA]->At(0));
-	m0_point.SetXYZ(m0_hit->GetX()*0.1, m0_hit->GetY()*0.1, 0.);//cm
 	m1_point.SetXYZ(m1_hit->GetX()*0.1, m1_hit->GetY()*0.1, 0.);//cm
 
-	TransformPoint(m0_point, &m0_angles, &m0_position);//lab
 	TransformPoint(m1_point, &m1_angles, &m1_position);//lab
-
-	//------- Project mwpc track to the center of the target
-	tx_in = (m0_point.X() - m1_point.X())/(m0_point.Z() - m1_point.Z());
-	ty_in = (m0_point.Y() - m1_point.Y())/(m0_point.Z() - m1_point.Z()); 
-	vertex_mwpc.SetX((m1_point.X() - tx_in * m1_point.Z())/*-1.111*/);
-	vertex_mwpc.SetY((m1_point.Y() - ty_in * m1_point.Z())/*-0.91*/);
-	vertex_mwpc.SetZ(0);
-	//Match to incoming
-	//	if((dx_vertex>-0.6 && dx_vertex<0.6) && (dy_vertex>-0.7 && dy_vertex<0.7)){
-	//		if(abs(dx_angle)<0.02 && abs(dy_angle)<0.04){
-	//s509
 	tr.mw1_x   = m1_point.X();
 	tr.mw1_y   = m1_point.Y();
 	tr.mw1_z   = m1_point.Z();
-
-	tr.mw0_x   = m0_point.X();
-	tr.mw0_y   = m0_point.Y();
-	tr.mw0_z   = m0_point.Z();
+	if(isnan(m1_point.X()) || isnan(m1_point.Y()) || isnan(m1_point.Z())){
+		return false;
+	}
 	tracks_in.push_back(tr);
-	//		}
-	//	}
-if((vertex_mwpc.X()>50 || vertex_mwpc.X()<-50) || (vertex_mwpc.Y()>50 || vertex_mwpc.Y()<-50)) return false;
-else return true;
+	return true;
 }
 
 bool R3BTrackingS091::IsGoodFiberHit(R3BFiberMAPMTHitData* fhit)
@@ -372,6 +362,7 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 		auto f32 = static_cast<R3BFiberMAPMTHitData*>(fDataItems[DET_FI32]->At(i));
 		if(!IsGoodFiberHit(f32)) continue;
 		double fitime = fTimeStitch->GetTime(f32->GetTime_ns() - fHeader->GetTStart(), "clocktdc", "vftx");
+		cout << fitime << endl;
 		if((fitime > FiberTimeMin && fitime < FiberTimeMax))
 		{	f32x.push_back(f32->GetX());
 			f32e.push_back(f32->GetEloss());

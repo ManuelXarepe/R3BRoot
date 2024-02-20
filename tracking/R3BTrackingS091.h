@@ -25,6 +25,7 @@
 #include "R3BMDFWrapper.h"
 #include "R3BTrack.h"
 #include "TCanvas.h"
+#include "TLatex.h"
 #include "TClonesArray.h"
 #include "TMath.h"
 #include "TString.h"
@@ -36,6 +37,7 @@
 #include <iostream>
 #include <sstream>
 #include "TTree.h"
+
 class R3BTrackingS091 : public FairTask
 {
   public:
@@ -47,6 +49,7 @@ class R3BTrackingS091 : public FairTask
     virtual void FinishEvent();
     virtual void FinishTask();
 
+    void Reset_Tracker_Histo();
     // GLAD current which was used for training MDF function
     // Should  be set form the steering macro
     void SetGladReferenceCurrent(double cur) { GladReferenceCurrent = cur; }

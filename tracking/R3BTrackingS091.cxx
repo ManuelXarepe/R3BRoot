@@ -29,12 +29,14 @@
 #include "FairLogger.h"
 #include "FairRootManager.h"
 #include "FairRunAna.h"
+#include "FairRunOnline.h"
 #include "FairRuntimeDb.h"
 
 #include "TCanvas.h"
 #include "TClonesArray.h"
 #include "TCutG.h"
 #include "TFile.h"
+#include "TFolder.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TMath.h"
@@ -42,6 +44,7 @@
 #include <TRandom3.h>
 #include <TRandomGen.h>
 #include <R3BCoarseTimeStitch.h>
+#include "THttpServer.h"
 
 #include "Math/Factory.h"
 #include "Math/Functor.h"
@@ -118,13 +121,11 @@ InitStatus R3BTrackingS091::Init()
 	}
 	// check if all cuts are properly set
 	if (GladCurrent < 0 || GladReferenceCurrent < 0 || 
-			FiberTimeMin < 0 || FiberTimeMax < 0 || 
 			FiberEnergyMin < 0 || FiberEnergyMax < 0)
 	{
 		R3BLOG(fatal, Form(" Some cuts are not set or negative values are used\n\n"));
 	}
 	// Initializing all MDF functions
-	LOG(info) << "Reading MDF function for FlightPath";
 	MDF_FlightPath = new R3BMDFWrapper(MDF_FlightPath_filename.Data());
 
 	LOG(info) << "Reading MDF function for PoQ";
@@ -147,9 +148,22 @@ InitStatus R3BTrackingS091::Init()
 	gMDFTrackerS522 = this;
 	// Request storage of R3BTrack data in the output tree
 	mgr->Register("MDFTracks", "MDFTracks data", fTrackItems, kTRUE);
+
+	//online
+
+    	TFolder* mainfol = new TFolder("tracker", "tracker_info");
+	FairRunOnline* run = FairRunOnline::Instance();
+	run->GetHttpServer()->Register("", this);
+	run->AddObject(mainfol);
+
+	run->GetHttpServer()->RegisterCommand("Reset_tracker", Form("/Objects/%s/->Reset_Tracker_Histo()", GetName()));
+
 	return kSUCCESS; 
 }
 
+void R3BTrackingS091::Reset_Tracker_Histo(){
+	return;
+	}
 void R3BTrackingS091::Exec(Option_t* option)
 {
 	if (fNEvents / 1000. == (int)fNEvents / 1000)
@@ -186,7 +200,7 @@ void R3BTrackingS091::Exec(Option_t* option)
 	mul_f33  = fDataItems[DET_FI33]->GetEntriesFast();
 	mul_tofd = fDataItems[DET_TOFD]->GetEntriesFast();
 
-	if(mul_los!=1) return;
+	//if(mul_los!=1) return;
 	if(mul_tofd<1) return;
 	if(mul_m0!=1)return;
 	if(mul_m1!=1) return;
@@ -236,6 +250,7 @@ void R3BTrackingS091::Exec(Option_t* option)
 			//preserve the order, it is expected by the MDF function!
 			mdf_data[0] = tin.mw1_x;
 			mdf_data[1] = tin.mw1_y;
+			mdf_data[1] = tin.mw1_z;
 			mdf_data[2] = (tin.mw0_x - tin.mw1_x)/(tin.mw0_z - tin.mw1_z);
 			mdf_data[3] = (tin.mw0_y - tin.mw1_y)/(tin.mw0_z - tin.mw1_z);
 			mdf_data[4] = tout.f32_x;

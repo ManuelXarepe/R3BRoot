@@ -311,7 +311,7 @@ void R3BTrackingS091::Exec(Option_t* option)
 				AoQ_Vs_Q_TOFD->Fill(maoz,tttxq_temp);
 			}
 
-			AddTrackData(tin.mw1_x, tin.mw1_y, tin.mw1_z, vec_PoQ, tofdq, maoz); // chix, chiy, quality
+			AddTrackData(tin.mw1_x, tin.mw1_y, tin.mw1_z, vec_PoQ, tttxq_temp, maoz); // chix, chiy, quality
 		}
 	}
 	return;

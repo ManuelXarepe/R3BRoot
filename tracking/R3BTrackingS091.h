@@ -231,7 +231,7 @@ class R3BTrackingS091 : public FairTask
     TString MDF_TX1_filename;
     TString MDF_TY1_filename;
 
-    double mdf_data[9];   // data container for the MDF function
+    double mdf_data[7];   // data container for the MDF function
     unsigned long fNEvents=0; // Event counter
     int fTrigger;
     int fTpat;
@@ -239,9 +239,10 @@ class R3BTrackingS091 : public FairTask
     double GladCurrent;
     double GladReferenceCurrent;
     double reference_PoQ ;
-    double FRS_BETA = 0.721883;
+    //double FRS_BETA = 0.721883; // 12C
+    double FRS_BETA = 0.699804; // 10C
     Bool_t DoAlignment;
-    double tof_offset; // ns
+    double tof_offset = 27.431851; // ns
 
     // Cut on fiber hit energy set by SetFiberEnergyMinMax():
     double FiberEnergyMin = 0;
@@ -270,6 +271,8 @@ class R3BTrackingS091 : public FairTask
     double e=0;
     double f=0;
     double g=0;
+    double h=0;
+    double hh=0;
 
     double tx0 = -999;
     double ty0 = -999;
@@ -277,11 +280,14 @@ class R3BTrackingS091 : public FairTask
     double ty1 = -999;
     double beta = -999;
     double gamma = -999;
+    double beta_tof = -999;
+    double gamma_tof = -999;
     double poq = -999;
     double tofdq = -999;
     double flight_p = -999;
     double tof = -999;
     double maoz = -999;
+    double maoz_tof = -999;
 
     // Essential constants
     const double SPEED_OF_LIGHT = 29.9792458; // cm/ns
@@ -289,11 +295,14 @@ class R3BTrackingS091 : public FairTask
 
     /* ----- tracker Canvases ----- */
     TCanvas* trackerCanvas;
+    TCanvas* trackerCanvas_tpat;
 
     /* ----- tracker Histograms ----- */
     TH2F* AoQ_Vs_Q_TOFD;
-    TH2F* AoQ_Vs_Q_TTTX;
-
+    TH2F* AoQ_tof_Vs_Q_TOFD;
+    TH2F* AoQ_Vs_Q_TOFD_tpat;
+    TH2F* AoQ_tof_Vs_Q_TOFD_tpat;
+    TH2F* AoQ_Vs_tpat;
     // Private method to fill output track data
     R3BTrack* AddTrackData(double x, double y, double z, TVector3 poq_vec, Double_t charge, Double_t aoz);
 

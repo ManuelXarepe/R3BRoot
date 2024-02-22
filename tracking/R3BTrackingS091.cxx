@@ -161,15 +161,64 @@ InitStatus R3BTrackingS091::Init()
 
 	run->GetHttpServer()->RegisterCommand("Reset_tracker", Form("/Objects/%s/->Reset_Tracker_Histo()", GetName()));
 
+	// inititallize canvas and histos
 	trackerCanvas = new TCanvas("tracker_Canvas", "trackerCanvas");
-	AoQ_Vs_Q_TOFD =
-		R3B::root_owned<TH2F>("AoQ_Vs_Q_TTTX", "AoQ_Vs_Q_TTTX", 1000, 1., 5, 1200, 0, 12);
+	trackerCanvas->Divide(2,1);
+
+	AoQ_Vs_Q_TOFD = R3B::root_owned<TH2F>("AoQ_Vs_Q_TOFD", "Using constant frs Beta", 500, 1., 3, 400, 0, 8);
 
 	AoQ_Vs_Q_TOFD->GetXaxis()->SetTitle("AoQ");
-	AoQ_Vs_Q_TOFD->GetYaxis()->SetTitle("TTTX Q");
-	trackerCanvas->cd();
+	AoQ_Vs_Q_TOFD->GetYaxis()->SetTitle("TOFD Q");
+
+	AoQ_tof_Vs_Q_TOFD = R3B::root_owned<TH2F>("AoQ_tof_Vs_Q_TOFD", " Calculating beta with TOFD", 500, 1., 3, 400, 0, 8);
+
+	AoQ_tof_Vs_Q_TOFD->GetXaxis()->SetTitle("AoQ");
+	AoQ_tof_Vs_Q_TOFD->GetYaxis()->SetTitle("TOFD Q");
+
+	trackerCanvas->cd(1);
 	AoQ_Vs_Q_TOFD->Draw("COLZ");
+	trackerCanvas->cd(2);
+	AoQ_tof_Vs_Q_TOFD->Draw("COLZ");
+
 	mainfol->Add(trackerCanvas);
+
+	//////////// with tpat
+	
+	trackerCanvas_tpat = new TCanvas("tracker_Canvas_tpat", "trackerCanvas_tpat");
+	trackerCanvas_tpat->Divide(2,1);
+
+	AoQ_Vs_Q_TOFD_tpat = R3B::root_owned<TH2F>("AoQ_Vs_Q_TOFD_tpat", " Using constant fsr Beta + reaction tpat", 500, 1., 3, 400, 0, 8);
+
+	AoQ_Vs_Q_TOFD_tpat->GetXaxis()->SetTitle("AoQ");
+	AoQ_Vs_Q_TOFD_tpat->GetYaxis()->SetTitle("TOFD Q");
+
+	AoQ_tof_Vs_Q_TOFD_tpat = R3B::root_owned<TH2F>("AoQ_tof_Vs_Q_TOFD_tpat", "Calculating beta with TOFD + reaction tpat", 500, 1., 3, 400, 0, 8);
+
+	AoQ_tof_Vs_Q_TOFD_tpat->GetXaxis()->SetTitle("AoQ");
+	AoQ_tof_Vs_Q_TOFD_tpat->GetYaxis()->SetTitle("TOFD Q");
+
+	trackerCanvas_tpat->cd(1);
+	AoQ_Vs_Q_TOFD_tpat->Draw("COLZ");
+	trackerCanvas_tpat->cd(2);
+	AoQ_tof_Vs_Q_TOFD_tpat->Draw("COLZ");
+
+	mainfol->Add(trackerCanvas_tpat);
+        /////////////////////////////////
+	
+	trackerCanvas_tpat = new TCanvas("tracker_Canvas_tpat", "trackerCanvas_tpat");
+	trackerCanvas_tpat->Divide(2,1);
+
+	AoQ_Vs_Q_TOFD_tpat = R3B::root_owned<TH2F>("AoQ_Vs_Q_TOFD_tpat", " Using constant fsr Beta + reaction tpat", 500, 1., 3, 400, 0, 8);
+
+	AoQ_Vs_Q_TOFD_tpat->GetXaxis()->SetTitle("AoQ");
+	AoQ_Vs_Q_TOFD_tpat->GetYaxis()->SetTitle("Tpat");
+
+	trackerCanvas_tpat->cd(1);
+	AoQ_Vs_Q_TOFD_tpat->Draw("COLZ");
+	trackerCanvas_tpat->cd(2);
+	AoQ_tof_Vs_Q_TOFD_tpat->Draw("COLZ");
+
+
 
 	return kSUCCESS; 
 }
@@ -189,9 +238,14 @@ void R3BTrackingS091::Exec(Option_t* option)
 	fNEvents += 1;
 	is_good_event = false;
 
-	Tpat = fHeader->GetTpat();//vairable in the output tree
+	hh++;
+	Tpat = fHeader->GetTpat();//vairiable in the output tree
 
-	if((Tpat & 0xf000)){
+	if(Tpat & 0xf000){
+		return;
+	}
+	h++;
+	if(Tpat == 0){
 		return;
 	}
 
@@ -216,13 +270,21 @@ void R3BTrackingS091::Exec(Option_t* option)
 	mul_tofd = fDataItems[DET_TOFD]->GetEntriesFast();
 	//if(mul_los!=1) return;
 	a++;
-	if(mul_tttx<1) return;
-	//if(mul_tofd<1) return;
+	//if(mul_tttx < 1){
+	//	return;
+	//}
+	if(mul_tofd<1){
+	       	return;
+	}
 	b++;
 	//if(mul_m0!=1)return;
-	if(mul_m1!=1) return;
+	if(mul_m1!=1){
+		return;
+	}
 	c++;
-	if(mul_f32<1 || mul_f30<1 || (mul_f31==0 && mul_f33==0)) return;
+	if(mul_f32 < 1 || mul_f30 < 1 || (mul_f31 < 1 && mul_f33 < 1)){
+		return;
+	}
 	d++;
 	//if(mul_foot<1) return;//for now take only mul=1 in mwpcs
 	//FRS data
@@ -239,29 +301,22 @@ void R3BTrackingS091::Exec(Option_t* option)
 	int mul_tofd1=0;
 	double tofdq_temp =0;
 	double tttxq_temp =0;
+	double tofd_tof_temp =0;
 	bool is_good_tofd = false;
 	bool is_good_tttx = false;
-//	for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
-//	{
-//		tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
-//		if (tofd_hit->GetDetId() == 1) // only hits from first plane, add Z later
-//		{
-//			is_good_tofd = true;
-//			mul_tofd1++;
-//			tofdq_temp=tofd_hit->GetEloss();
-//			//break;
-//		}
-//	}
-	for (int ihit = 0; ihit < fDataItems[TTTX_HITDATA]->GetEntriesFast(); ihit++)
+	for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
 	{
-		auto hit = dynamic_cast<R3BTttxHitData*>(fDataItems[TTTX_HITDATA]->At(ihit));
-		auto idet = hit->GetDetID();
-		if(idet==1){
-			tttxq_temp = hit->GetChargeZ();
-			is_good_tttx = true;
+		tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
+		if (tofd_hit->GetDetId() == 1 && tofd_hit->GetTof() < 120 && tofd_hit->GetTof() > 100) // only hits from first plane, add Z later
+		{
+			is_good_tofd = true;
+			mul_tofd1++;
+			tofdq_temp=tofd_hit->GetEloss();
+			tofd_tof_temp=tofd_hit->GetTof() - 104.2 + tof_offset;
+			//break;
 		}
 	}
-	if(!is_good_tttx){ 
+	if(!is_good_tofd /*|| mul_tofd1!=1*/){ 
 		return;
 	}
 	e++;
@@ -277,6 +332,10 @@ void R3BTrackingS091::Exec(Option_t* option)
 	is_good_event = true;
 	cond=true;
 	int counter = 0;
+	if(tracks_in.size()>3 && tracks_out.size()>3){
+		cout <<  " too many tracks " << tracks_in.size() << " " <<  tracks_out.size() << endl; 
+		return;
+	}
 	double delta_TX1, delta_TX0, delta_TY0;
 	for (auto & tin : tracks_in){
 		for (auto & tout : tracks_out){
@@ -285,33 +344,39 @@ void R3BTrackingS091::Exec(Option_t* option)
 			mdf_data[0] = tin.mw1_x;
 			mdf_data[1] = tin.mw1_y;
 			mdf_data[2] = tin.mw1_z;
-			mdf_data[3] = 0;/*(tin.mw0_x - tin.mw1_x)/(tin.mw0_z - tin.mw1_z);*/
-			mdf_data[4] = 0;/*(tin.mw0_y - tin.mw1_y)/(tin.mw0_z - tin.mw1_z);*/
-			mdf_data[5] = tout.f32_x;
-			mdf_data[6] = tout.f32_z;
-			mdf_data[7] = (tout.last_x - tout.f32_x)/(tout.last_z - tout.f32_z);
-			mdf_data[8] = (tout.f30_y  - tin.mw0_y)/(tout.f30_z - tin.mw0_z);
+			mdf_data[3] = tout.f32_x;
+			mdf_data[4] = tout.f32_z;
+			mdf_data[5] = (tout.last_x - tout.f32_x)/(tout.last_z - tout.f32_z);
+			mdf_data[6] = (tout.f30_y  - tin.mw1_y)/(tout.f30_z - tin.mw1_z);
 			// Calculate all required MDF values
 
 			flight_p = MDF_FlightPath->MDF(mdf_data);
 			poq = MDF_PoQ->MDF(mdf_data) * GladCurrent / GladReferenceCurrent;
-			tx0 = MDF_TX0->MDF(mdf_data);
-			tx1 = MDF_TX1->MDF(mdf_data);
-			ty0 = MDF_TY0->MDF(mdf_data);
-			ty1 = MDF_TY1->MDF(mdf_data);
+	//		tx0 = MDF_TX0->MDF(mdf_data);
+	//		tx1 = MDF_TX1->MDF(mdf_data);
+	//		ty0 = MDF_TY0->MDF(mdf_data);
+	//		ty1 = MDF_TY1->MDF(mdf_data);
 			tof = flight_p / FRS_BETA / SPEED_OF_LIGHT;
 
 			beta = flight_p / tof / SPEED_OF_LIGHT;
 			gamma = 1. / sqrt(1 - pow(beta, 2));
 			maoz = poq / beta / gamma / AMU;
-			TVector3 vec_PoQ(tx0, ty0, 1);
-			vec_PoQ.SetMag(poq);
+
+			beta_tof = flight_p / tofd_tof_temp / SPEED_OF_LIGHT;
+			gamma_tof = 1. / sqrt(1 - pow(beta_tof, 2));
+			maoz_tof = poq / beta_tof / gamma_tof / AMU;
 
 			if(counter == 1){
-				AoQ_Vs_Q_TOFD->Fill(maoz,tttxq_temp);
+				AoQ_Vs_Q_TOFD->Fill(maoz,tofdq_temp);
+				AoQ_tof_Vs_Q_TOFD->Fill(maoz_tof,tofdq_temp);
+				if((fTpat & 16) == 16 || (fTpat & 32) == 32){
+					AoQ_Vs_Q_TOFD_tpat->Fill(maoz,tofdq_temp);
+					AoQ_tof_Vs_Q_TOFD_tpat->Fill(maoz_tof,tofdq_temp);
+				}
 			}
-
-			AddTrackData(tin.mw1_x, tin.mw1_y, tin.mw1_z, vec_PoQ, tttxq_temp, maoz); // chix, chiy, quality
+			//TVector3 vec_PoQ(tx0, ty0, 1);
+			//vec_PoQ.SetMag(poq);
+			//AddTrackData(tin.mw1_x, tin.mw1_y, tin.mw1_z, vec_PoQ, tofdq_temp, maoz); // chix, chiy, quality
 		}
 	}
 	return;
@@ -323,15 +388,24 @@ void R3BTrackingS091::FinishEvent()
 	{
 		DataItem->Clear();
 	}
-	if (fNEvents / 1000. == (int)fNEvents / 1000)
-	cout << "finish event " << a << " " << b << " " << c << " "  << d << " " << e << " " << f << " " << g << endl;
+	if (fNEvents / 10000. == (int)fNEvents / 10000)
+	cout << " \n finish event " 
+		<< " \n before any cuts " << hh 
+		<< " \n survives offspil tpat => " << h 
+		<< " \n survives tpat 0 => " << a 
+		<< " \n survives mul!=0 in tofd => " << b 
+		<< " \n survives mul!=0 in mwpc1 => " << c 
+		<< " \n survives fiber mul in atleast 3 fib => " << d 
+		<< " \n survives there is at least one hit in tofd plane 1 => " << e 
+		<< " \n survives mwpc1 is not nan => " << f 
+		<< " \n survives survived the clustering in fibs => " << g 
+		<< endl;
 }
 
 void R3BTrackingS091::FinishTask()
 {
 	LOG(info) << "Processed " << fNEvents << " events\n\n";
 	AoQ_Vs_Q_TOFD->Write();
-	cout << "ending " << a << " " << b << " " << c << " "  << d << " " << e << " " << f << " " << g << endl;
 
 	//cout<<"WRITE"<<endl;
 }
@@ -368,8 +442,8 @@ bool R3BTrackingS091::IsGoodFiberHit(R3BFiberMAPMTHitData* fhit)
 }
 bool R3BTrackingS091::MakeOutgoingTracks()
 {
-	if(fDataItems[DET_FI32]->GetEntriesFast() == 0 || fDataItems[DET_FI30]->GetEntriesFast() == 0 || 
-			(fDataItems[DET_FI33]->GetEntriesFast() == 0 && fDataItems[DET_FI31]->GetEntriesFast()==0) ) 
+	if(fDataItems[DET_FI32]->GetEntriesFast() > 3 || fDataItems[DET_FI30]->GetEntriesFast() > 3 || 
+			(fDataItems[DET_FI33]->GetEntriesFast() > 3 && fDataItems[DET_FI31]->GetEntriesFast() > 3) ) 
 		return false;
 	tracks_out.clear();
 	Track tr;
@@ -387,7 +461,8 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 	{
 		auto f32 = static_cast<R3BFiberMAPMTHitData*>(fDataItems[DET_FI32]->At(i));
 		if(!IsGoodFiberHit(f32)) continue;
-		double fitime = fTimeStitch->GetTime(f32->GetTime_ns() - fHeader->GetTStart(), "clocktdc", "vftx");
+		double fitime = f32->GetTime_ns() - fHeader->GetTStart();
+//		cout << " 32 " << fitime << endl;
 		if((fitime > FiberTimeMin && fitime < FiberTimeMax))
 		{	f32x.push_back(f32->GetX());
 			f32e.push_back(f32->GetEloss());
@@ -397,7 +472,8 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 	{
 		auto f30 = static_cast<R3BFiberMAPMTHitData*>(fDataItems[DET_FI30]->At(i));
 		if(!IsGoodFiberHit(f30)) continue;
-		double fitime = fTimeStitch->GetTime(f30->GetTime_ns() - fHeader->GetTStart(), "clocktdc", "vftx");
+		double fitime = f30->GetTime_ns() - fHeader->GetTStart();
+//		cout << " 30 " << fitime << endl;
 		if((fitime > FiberTimeMin && fitime < FiberTimeMax))
 		{
 			f30y.push_back(f30->GetY());
@@ -409,7 +485,8 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 		auto f33 = static_cast<R3BFiberMAPMTHitData*>(fDataItems[DET_FI33]->At(i));
 		if(!IsGoodFiberHit(f33)) continue;
 
-		double fitime = fTimeStitch->GetTime(f33->GetTime_ns() - fHeader->GetTStart(), "clocktdc", "vftx");
+		double fitime = f33->GetTime_ns() - fHeader->GetTStart();
+//		cout << " 33 " << fitime << endl;
 		if((fitime > FiberTimeMin && fitime < FiberTimeMax))
 		{
 			flastx.push_back(f33->GetX());
@@ -420,7 +497,8 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 	{
 		auto f31 = static_cast<R3BFiberMAPMTHitData*>(fDataItems[DET_FI31]->At(i));
 		if(!IsGoodFiberHit(f31)) continue;
-		double fitime = fTimeStitch->GetTime(f31->GetTime_ns() - fHeader->GetTStart(), "clocktdc", "vftx");
+		double fitime = f31->GetTime_ns() - fHeader->GetTStart();
+//		cout << " 31 " << fitime << endl;
 		if((fitime > FiberTimeMin && fitime < FiberTimeMax))
 		{
 			flast2x.push_back(f31->GetX());

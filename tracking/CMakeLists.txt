@@ -15,6 +15,39 @@
 # in the array. The extension is already found. Any number of sources could be
 # listed here.
 
+Set(SYSTEM_INCLUDE_DIRECTORIES
+${SYSTEM_INCLUDE_DIRECTORIES}
+${BASE_INCLUDE_DIRECTORIES}
+)
+
+set(INCLUDE_DIRECTORIES
+#put here all directories where header files are located
+${R3BROOT_SOURCE_DIR}/tracking
+${R3BROOT_SOURCE_DIR}/field
+${R3BROOT_SOURCE_DIR}/tof
+${R3BROOT_SOURCE_DIR}/r3bbase
+${R3BROOT_SOURCE_DIR}/r3bdata
+${R3BROOT_SOURCE_DIR}/r3bdata/tofData
+${R3BROOT_SOURCE_DIR}/r3bdata/pspData
+${R3BROOT_SOURCE_DIR}/r3bdata/fibData
+${R3BROOT_SOURCE_DIR}/r3bdata/mwpcData
+${R3BROOT_SOURCE_DIR}/r3bdata/frsData
+${R3BROOT_SOURCE_DIR}/r3bdata/musicData
+${R3BROOT_SOURCE_DIR}/r3bdata/losData
+${R3BROOT_SOURCE_DIR}/r3bdata/tttxData
+${R3BROOT_SOURCE_DIR}/r3bdata/neulandData
+)
+
+include_directories( ${INCLUDE_DIRECTORIES})
+include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
+
+set(LINK_DIRECTORIES
+${ROOT_LIBRARY_DIR}
+${FAIRROOT_LIBRARY_DIR}
+)
+
+link_directories( ${LINK_DIRECTORIES})
+
 set(SRCS
     R3BTPropagator.cxx
     R3BTGeoPar.cxx

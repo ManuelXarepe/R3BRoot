@@ -4,7 +4,7 @@
 #include <math.h>
 
 const int    MAX_STORY = 10000000; 	 // Total number of generated events
-const double ENERGY    = 500.;           // Beam energy (MeV/u)
+const double ENERGY    = 1250.;           // Beam energy (MeV/u)
 const double Exe       = 0.0;        // Residual excitation energy (MeV) (change it for deeply bound states)
 const bool   ISOTROPIC = true;           // Internal momentum spread (Gauss)
 //const double UNIT = 931.494061;          // Atomic mass unit MeV/c²
@@ -19,7 +19,7 @@ const double UNIT = 931.4940954;          // Atomic mass unit MeV/c²
 const int    A 	 = 12;                            // Mass number of the nucleus A
 const double MA  = 12.*UNIT;		          // Nuclear mass of initital A nucleus(MeV/c²)
 const double MB  = 11.009305404*UNIT + Exe;       // Nuclear mass of the residual fragment B (MeV/c²)
-const double MOM_SIGMA = 20.00;                  // Internal momentum spread (Gauss)
+const double MOM_SIGMA = 100.00;                  // Internal momentum spread (Gauss)
 
 /*
 //Pb-208

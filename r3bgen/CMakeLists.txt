@@ -33,6 +33,7 @@ set(INCLUDE_DIRECTORIES
     ${R3BROOT_SOURCE_DIR}/field 
     ${R3BROOT_SOURCE_DIR}/generators 
     ${R3BROOT_SOURCE_DIR}/r3bgen
+    ${R3BROOT_SOURCE_DIR}/tracking
     ${R3BROOT_SOURCE_DIR}/r3bdata 
     ${R3BROOT_SOURCE_DIR}/r3bbase 
     ${Geant4_INCLUDE_DIRS}
@@ -70,6 +71,7 @@ set(SRCS
     R3BParticleSelector.cxx
     R3BBeamProperties.cxx
     R3BINCLRootGenerator.cxx
+    R3BQFSGenerator.cxx
     )
 
 # fill list of header files from list of source files

@@ -56,7 +56,7 @@ void R3BRpc::Initialize()
     FairDetector::Initialize();
 
     R3BLOG(info, " ");
-    R3BLOG(debug, "Vol. (McId) " << gMC->VolId("strip"));
+    R3BLOG(debug, "Vol. (McId) " << gMC->VolId("gas"));
 }
 
 Bool_t R3BRpc::ProcessHits(FairVolume* vol)
@@ -183,7 +183,7 @@ R3BRpcPoint* R3BRpc::AddPoint(Int_t trackID,
 
 Bool_t R3BRpc::CheckIfSensitive(std::string name)
 {
-    if (TString(name).Contains("strip"))
+    if (TString(name).Contains("gas"))
     {
         // LOG(info) << "Found geometry from ROOT file: " << name;
         return kTRUE;

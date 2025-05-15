@@ -42,8 +42,8 @@ void SetCuts()
     MC->SetProcess("LOSS", 1); /**energy loss*/
     MC->SetProcess("MULS", 1); /**multiple scattering*/
 
-    const Double_t cut1 = 1.0E-4; // GeV --> 100 keV
-    const Double_t cut2 = 1.0E-2; // GeV --> 10 MeV
+    const Double_t cut1 = 1.0E-6; // GeV --> 100 keV
+    const Double_t cut2 = 1.0E-6; // GeV --> 100 MeV
     const Double_t tofmax = 1.e1; // seconds
 
     MC->SetCut("CUTGAM", cut1);   /** gammas (GeV)*/

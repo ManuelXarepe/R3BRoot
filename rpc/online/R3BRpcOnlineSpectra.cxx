@@ -315,13 +315,13 @@ InitStatus R3BRpcOnlineSpectra::Init()
     stripRightTimeCorr = R3B::root_owned<TH2F>(
         "strip_Right_Time_Corr", "Strip_Vs_Time:Right", 41, 0.5, 41.5, fRpcTimeBins, fLeftRpcTimeLim, fRightRpcTimeLim);
     stripLeftTofCorr = R3B::root_owned<TH2F>(
-        "strip_Left_Tof_Corr", "Strip_Vs_Tof:Left", 41, 0.5, 41.5, fRpcTimeBins, 100, 200);
+        "strip_Left_Tof_Corr", "Strip_Vs_Tof:Left", 41, 0.5, 41.5, fRpcTimeBins, fLeftTofLim, fRightTofLim);
     stripRightTofCorr = R3B::root_owned<TH2F>(
-        "strip_Right_Tof_Corr", "Strip_Vs_Tof:Right", 41, 0.5, 41.5, fRpcTimeBins, 100, 200);
+        "strip_Right_Tof_Corr", "Strip_Vs_Tof:Right", 41, 0.5, 41.5, fRpcTimeBins, fLeftTofLim, fRightTofLim);
 
     /* ----- Cal Histograms ----- */
     stripCalTimeCorr =
-        R3B::root_owned<TH2F>("strip_Cal_Time_Corr", "Strip:Time_Left_Vs_Time_Right", 5000, -3400, -2950, 5000,-3400, -2950);
+        R3B::root_owned<TH2F>("strip_Cal_Time_Corr", "Strip:Time_Left_Vs_Time_Right", 5000, -3500, -2950, 5000,-3500, -2950);
     stripCalToTCorr =
         R3B::root_owned<TH2F>("strip_Cal_ToT_Corr", "Strip:ToT_Left_Vs_ToT_Right", 1000, -10, 50, 1000, -10, 50);
 
@@ -393,7 +393,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtFineHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
 
         sprintf(name, "Time_Pmt_%i_TOP", i + 1);
-        pmtPreCalTimeHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -3400, -2500);
+        pmtPreCalTimeHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -3500, -2500);
 
         sprintf(name, "ToT_Pmt_%i_TOP", i + 1);
         pmtPreCalTotHistoTop[i] = R3B::root_owned<TH1F>(name, name, 2000, 0, 400);
@@ -408,7 +408,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtFineHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
 
         sprintf(name, "Time_Pmt_%i_BOTTOM", i + 1);
-        pmtPreCalTimeHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -3400, -2500);
+        pmtPreCalTimeHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -3500, -2500);
 
 	sprintf(name, "Tof_Pmt_%i_BOTTOM", i + 1);
         pmtPreCalTofHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 2000, -500, -100);

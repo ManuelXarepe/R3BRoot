@@ -13,15 +13,15 @@
 
 // Created on 09/02/2024 by M.Xarepe
 
-#ifndef R3BTRACKINGS091
-#define R3BTRACKINGS091
+#ifndef R3BTRACKINGG249
+#define R3BTRACKINGG249
 
 #include "FairTask.h"
 #include "R3BEventHeader.h"
 #include "R3BFiberMAPMTHitData.h"
 #include "R3BNeulandHit.h"
 #include "R3BTofdHitData.h"
-#include "R3BTttxHitData.h"
+#include "R3BFootHitData.h"
 #include "R3BCoarseTimeStitch.h"
 #include "R3BMDFWrapper.h"
 #include "R3BTrack.h"
@@ -40,12 +40,12 @@
 #include "TTree.h"
 
 class TH2F;
-class R3BTrackingS091 : public FairTask
+class R3BTrackingG249 : public FairTask
 {
 	public:
-		R3BTrackingS091();
-		R3BTrackingS091(const char* name, int iVerbose = 1);
-		virtual ~R3BTrackingS091();
+		R3BTrackingG249();
+		R3BTrackingG249(const char* name, int iVerbose = 1);
+		virtual ~R3BTrackingG249();
 		virtual InitStatus Init();
 		virtual void Exec(Option_t* option);
 		virtual void FinishEvent();
@@ -58,6 +58,8 @@ class R3BTrackingS091 : public FairTask
 
 		// GLAD current in the run being anlaysed, set from steering macro
 		void SetGladCurrent(double cur) { GladCurrent = cur; }
+		bool function_type;
+		void SetVertexfunction(bool tmp) { function_type = true; }
 
 		// Set MDF functions from the steering macro
 		void Set_MDF_PoQ(TString name) { MDF_PoQ_filename = name; }
@@ -116,6 +118,7 @@ class R3BTrackingS091 : public FairTask
 		void SetFiberEnergyMinMax(double min, double max){FiberEnergyMin = min; FiberEnergyMax=max;};
 		// Setup energy cuts in foot and fibers 
 		void SetFiberTimeMinMax(double min, double max){FiberTimeMin = min; FiberTimeMax=max;};
+		void SetFootEnergyMinMax(double min, double max){FootEnergyMin = min; FootEnergyMax=max;};
 
 		// Setters for the alignment procedure
 		void SetReferencePoQ(double val) { reference_PoQ = val; }
@@ -126,17 +129,26 @@ class R3BTrackingS091 : public FairTask
 		double GetReference_frs_beta() { return FRS_BETA; }
 
 		void Alignment();
-		static double AlignmentErrorS091(const double* par);
+		static double AlignmentErrorG249(const double* par);
 
 		//Storing indices of hits in TCA for potential track candidates
+
 		struct Track
 		{
-			double mw1_x;
-			double mw1_y;
-			double mw1_z;
-			double mw0_x;
-			double mw0_y;
-			double mw0_z;
+			double f1_x;
+			double f1_z;
+			double f1_Q;
+			double f2_y;
+			double f2_z;
+			double f2_Q;
+			double f15_x;
+			double f15_z;
+			double f15_Q;
+			double f16_y;
+			double f16_z;
+			double f16_Q;
+			double tx0;
+			double ty0;
 			double f32_x;
 			double f32_z;
 			double f30_x;
@@ -144,13 +156,17 @@ class R3BTrackingS091 : public FairTask
 			double f30_z;
 			double last_x;
 			double last_z;
+			double mw_ax;
+			double mw_ay;
 			bool fiber;
 		};
+
 		std::vector<Track> tracks_in; //track candidates in FOOT
 		std::vector<Track> tracks_out;//track candidates in FOOT
 
 		TTree *vt;
 		bool IsGoodFiberHit(R3BFiberMAPMTHitData* fhit);
+		bool IsGoodFootHit(R3BFootHitData* fhit);
 		bool SortFootData();
 		bool MakeIncomingTracks();
 		bool MakeOutgoingTracks();
@@ -163,9 +179,15 @@ class R3BTrackingS091 : public FairTask
 			TVector3 f32;
 			TVector3 flast;
 		};
+		vector<int> f1_hits;
+		vector<int> f2_hits;
+		vector<int> f15_hits;
+		vector<int> f16_hits;
+
 		std::vector<det_points> det_points_vec;
-		TVector3 m0_point, m1_point, f30_point, f32_point, flast_point;
-		TVector3 m0_angle, m1_angle, f30_angle, f32_angle, flast_angle;
+		TVector3 m0_point, m1_point, f1_point, f2_point, f15_point,f16_point, f30_point, f32_point, flast_point;
+		TVector3 m0_point_i, m1_point_i, f1_point_i, f2_point_i, f15_point_i,f16_point_i, f30_point_i, f32_point_i, flast_point_i;
+		TVector3 m0_point_i1, m1_point_i1, f1_point_i1, f2_point_i1, f15_point_i1,f16_point_i1, f30_point_i1, f32_point_i1, flast_point_i1;
 
 	private:
 		// Input hit data from the TClonesArray
@@ -180,12 +202,12 @@ class R3BTrackingS091 : public FairTask
 			DET_FI33,
 			DET_FI_LAST = DET_FI33,
 			DET_TOFD,
-			TTTX_HITDATA,
+			FOOT_HITDATA,
 			MWPC0_HITDATA,
 			MWPC1_HITDATA,
 			FRS_DATA,
 			LOS_DATA,
-			NEULAND_DATA,
+			/*NEULAND_DATA,*/
 			DET_MAX
 		};
 
@@ -194,7 +216,7 @@ class R3BTrackingS091 : public FairTask
 		// Names of essential branches in the input tree
 		// do not change the order! add new data in the end
 		const char* fDetectorNames[DET_MAX + 1] = { "Fi30Hit", "Fi31Hit", "Fi32Hit", "Fi33Hit",
-			"TofdHit", "tttxHitData", "Mwpc0HitData", "Mwpc1HitData", "FrsSciTcalData", "LosCal", "NeulandHits", NULL };
+			"TofdHit", "FootHitData", "Mwpc0HitData", "Mwpc1HitData", "FrsSciTcalData", "LosCal",/* "NeulandHits",*/ NULL };
 
 		R3BEventHeader* fHeader;
 		std::vector<TClonesArray*> fDataItems; // input data
@@ -212,6 +234,10 @@ class R3BTrackingS091 : public FairTask
 		TVector3 f31_position;
 		TVector3 f32_position;
 		TVector3 f33_position;
+		TVector3 f1_position;
+		TVector3 f2_position;
+		TVector3 f15_position;
+		TVector3 f16_position;
 
 		TVector3 m0_angles;
 		TVector3 m1_angles;
@@ -219,6 +245,10 @@ class R3BTrackingS091 : public FairTask
 		TVector3 f31_angles;
 		TVector3 f32_angles;
 		TVector3 f33_angles;
+		TVector3 f1_angles;
+		TVector3 f2_angles;
+		TVector3 f15_angles;
+		TVector3 f16_angles;
 
 		R3BMDFWrapper* MDF_FlightPath;
 		R3BMDFWrapper* MDF_PoQ;
@@ -234,7 +264,7 @@ class R3BTrackingS091 : public FairTask
 		TString MDF_TX1_filename;
 		TString MDF_TY1_filename;
 
-		double mdf_data[7];   // data container for the MDF function
+		double mdf_data[8];   // data container for the MDF function
 		unsigned long fNEvents=0; // Event counter
 		int fTrigger;
 		int fTpat;
@@ -242,8 +272,8 @@ class R3BTrackingS091 : public FairTask
 		double GladCurrent;
 		double GladReferenceCurrent;
 		double reference_PoQ ;
-		//double FRS_BETA = 0.721883; // 12C
-		double FRS_BETA = 0.722; // 10C
+		double FRS_BETA = 0.714549;// 12C
+		//double FRS_BETA = 0.722; // 10C
 		//double FRS_BETA = 0.699804; // 10C
 		//double FRS_BETA = 0.714; // 16C
 		//double FRS_BETA = 0.714034; // 12C 2nd
@@ -259,12 +289,17 @@ class R3BTrackingS091 : public FairTask
 		double FiberEnergyMax = 0;
 		double FiberTimeMin = 0;
 		double FiberTimeMax = 0;
+		double FootEnergyMin = 0;
+		double FootEnergyMax = 0;
 
 		static constexpr int N_glob_tracks_max = 10000000;
 		int mul_los=-999;
 		int mul_m0=-999;
 		int mul_m1=-999;
-		int mul_tttx=-999;
+		int mul_f1=-999;
+		int mul_f2=-999;
+		int mul_f15=-999;
+		int mul_f16=-999;
 		int mul_f30=-999;
 		int mul_f31=-999;
 		int mul_f32=-999;
@@ -276,16 +311,16 @@ class R3BTrackingS091 : public FairTask
 		int Tpat = -999;
 		bool cond=false;
 		int add_track_counter = 0;
-		double a=0;
-		double b=0;
-		double c=0;
-		double d=0;
-		double e=0;
-		double f=0;
-		double g=0;
-		double h=0;
-		double hh=0;
-		double hhh=0;
+		double a_counter=0;
+		double b_counter=0;
+		double c_counter=0;
+		double d_counter=0;
+		double e_counter=0;
+		double f_counter=0;
+		double g_counter=0;
+		double h_counter=0;
+		double hh_counter=0;
+		double hhh_counter=0;
 
 		double tx0 = -999;
 		double ty0 = -999;
@@ -310,6 +345,7 @@ class R3BTrackingS091 : public FairTask
 		TCanvas* trackerCanvas;
 		TCanvas* frs_betaCanvas;
 		TCanvas* AoQ_vs_pos_both_fibCanvas;
+		TCanvas* Q_vs_pos_Canvas;
 		TCanvas* trackerCanvas_tpat;
 		TCanvas* trackerAnglesCanvas;
 		TCanvas* neutronAnglesCanvas;
@@ -327,6 +363,7 @@ class R3BTrackingS091 : public FairTask
 		TH2F* AoQ_vs_TOFD_pos_q_5;
 		TH2F* AoQ_vs_TOFD_pos_q_6;
 
+		TH2F* Q_TOFD_vs_TOFD_pos;
 		TH2F* AoQ_Vs_Q_TOFD;
 		TH2F* AoQ_vs_TOFD_pos;
 		TH2F* AoQ_Vs_Q_TOFD_tpat;
@@ -345,7 +382,7 @@ class R3BTrackingS091 : public FairTask
 		R3BTrack* AddTrackData(double x, double y, double z, TVector3 poq_vec, Double_t charge, Double_t aoz);
 
 	public:
-		ClassDef(R3BTrackingS091, 1)
+		ClassDef(R3BTrackingG249, 1)
 };
 
 #endif

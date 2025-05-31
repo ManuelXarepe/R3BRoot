@@ -13,14 +13,14 @@
 
 // Created on 09/02/2024 by M.Xarepe
 
-#include "R3BTrackingS091.h"
+#include "R3BTrackingG249.h"
 #include "R3BFiberMAPMTHitData.h"
 #include "R3BEventHeader.h"
 #include "R3BLosHitData.h"
 #include "R3BTofdHitData.h"
 #include "R3BMwpcHitData.h"
 #include "R3BFrsData.h"
-#include "R3BTttxHitData.h"
+#include "R3BFootHitData.h"
 
 #include "R3BMCTrack.h"
 #include "R3BMDFWrapper.h"
@@ -60,14 +60,14 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
-R3BTrackingS091* gMDFTrackerS091;
+R3BTrackingG249* gMDFTrackerG249;
 
-R3BTrackingS091::R3BTrackingS091()
-	: R3BTrackingS091("TrackingS091", 1)
+R3BTrackingG249::R3BTrackingG249()
+	: R3BTrackingG249("TrackingG249", 1)
 {
 }
 
-R3BTrackingS091::R3BTrackingS091(const char* name, Int_t iVerbose)
+R3BTrackingG249::R3BTrackingG249(const char* name, Int_t iVerbose)
 	: FairTask(name, iVerbose)
 	, fTrigger(-1)
 	, fTpat(-1)
@@ -86,15 +86,15 @@ R3BTrackingS091::R3BTrackingS091(const char* name, Int_t iVerbose)
 {
 }
 
-R3BTrackingS091::~R3BTrackingS091()
+R3BTrackingG249::~R3BTrackingG249()
 {
 	if (fTrackItems){
 		delete fTrackItems;}
 }
 
-InitStatus R3BTrackingS091::Init()
+InitStatus R3BTrackingG249::Init()
 {
-	LOG(info) << "R3BTrackingS091::Init()";
+	LOG(info) << "R3BTrackingG249::Init()";
 	FairRootManager* mgr = FairRootManager::Instance();
 	if (NULL == mgr)
 	{
@@ -106,7 +106,7 @@ InitStatus R3BTrackingS091::Init()
 	//fHeader = dynamic_cast<R3BEventHeader*>(mgr->GetObject("EventHeader."));
 	if (!fHeader)
 	{
-		LOG(warn) << "R3BTrackingS091::Init() EventHeader. not found";
+		LOG(warn) << "R3BTrackingG249::Init() EventHeader. not found";
 	}
 	// Reading all detector branches
 	cout << "\nDET_MAX = " << DET_MAX << endl;
@@ -130,17 +130,17 @@ InitStatus R3BTrackingS091::Init()
 	LOG(info) << "Reading MDF function for TX0";
 	MDF_TX0 = new R3BMDFWrapper(MDF_TX0_filename.Data());
 
-	LOG(info) << "Reading MDF function for FlightPath";
-	MDF_FlightPath = new R3BMDFWrapper(MDF_FlightPath_filename.Data());
+	//LOG(info) << "Reading MDF function for FlightPath";
+	//MDF_FlightPath = new R3BMDFWrapper(MDF_FlightPath_filename.Data());
 
 	LOG(info) << "Reading MDF function for TY0";
 	MDF_TY0 = new R3BMDFWrapper(MDF_TY0_filename.Data());
 
-	LOG(info) << "Reading MDF function for TX1";
-	MDF_TX1 = new R3BMDFWrapper(MDF_TX1_filename.Data());
+	//LOG(info) << "Reading MDF function for TX1";
+	//MDF_TX1 = new R3BMDFWrapper(MDF_TX1_filename.Data());
 
-	LOG(info) << "Reading MDF function for TY1";
-	MDF_TY1 = new R3BMDFWrapper(MDF_TY1_filename.Data());
+	//LOG(info) << "Reading MDF function for TY1";
+	//MDF_TY1 = new R3BMDFWrapper(MDF_TY1_filename.Data());
 
 	LOG(info) << "Reading MDF function for PoQ";
 	MDF_PoQ = new R3BMDFWrapper(MDF_PoQ_filename.Data());
@@ -148,7 +148,7 @@ InitStatus R3BTrackingS091::Init()
 
 	//Read output from the vertex macro
 	// linking to global pointer (needed by alignment)
-	gMDFTrackerS091 = this;
+	gMDFTrackerG249 = this;
 	// Request storage of R3BTrack data in the output tree
 	mgr->Register("MDFTracks", "MDFTracks data", fTrackItems, kTRUE);
 
@@ -216,6 +216,7 @@ InitStatus R3BTrackingS091::Init()
 	AoQ_Vs_tpat->Draw("COLZ");
 
 	mainfol->Add(trackerCanvas_Vs_tpat);
+
 	//////////////////////
 	// Folder for mapped data
 	AoQ_vs_pos_both_fibCanvas = new TCanvas("AoQ_vs_pos_both_fib", "AoQ_vs_pos_both_fib");
@@ -273,6 +274,19 @@ InitStatus R3BTrackingS091::Init()
 	mainfol->Add(AoQ_vs_pos_both_fibCanvas);
 	///////////////////////
 	
+	Q_vs_pos_Canvas = new TCanvas("Q_vs_pos_Canvas", "Q_vs_pos_Canvas");
+
+	Q_TOFD_vs_TOFD_pos = R3B::root_owned<TH2F>("Q_TOFD_vs_TOFD_pos", "Q_TOFD_vs_TOFD_pos", 500, -100, 100, 1200, 0, 12);
+
+	Q_TOFD_vs_TOFD_pos->GetXaxis()->SetTitle("TOFD_X");
+	Q_TOFD_vs_TOFD_pos->GetYaxis()->SetTitle("Q_TOFD");
+
+	Q_vs_pos_Canvas->cd();
+	Q_TOFD_vs_TOFD_pos->Draw("COLZ");
+
+	mainfol->Add(Q_vs_pos_Canvas);
+
+	//////////////////////////////
 	trackerAnglesCanvas = new TCanvas("tracker_AnglesCanvas", "trackerAnglesCanvas");
 	trackerAnglesCanvas->Divide(2,1);
 
@@ -292,53 +306,54 @@ InitStatus R3BTrackingS091::Init()
 	mainfol->Add(trackerAnglesCanvas);
 
 	//// Neutron
-	TFolder* neutronfol = new TFolder("neutron", "neutron");
-	mainfol->Add(neutronfol);
+	//TFolder* neutronfol = new TFolder("neutron", "neutron");
+	//mainfol->Add(neutronfol);
 
-	betaCanvas = new TCanvas("BetasCanvas", "BetaCanvas");
+	//betaCanvas = new TCanvas("BetasCanvas", "BetaCanvas");
 
-	neutron_beta = R3B::root_owned<TH1F>("neutron_beta", "neutron_beta", 500, 0, 1);
+	//neutron_beta = R3B::root_owned<TH1F>("neutron_beta", "neutron_beta", 500, 0, 1);
 
-	neutron_beta->GetXaxis()->SetTitle("beta");
+	//neutron_beta->GetXaxis()->SetTitle("beta");
 
-	betaCanvas->cd();
-	neutron_beta->Draw("hist");
+	//betaCanvas->cd();
+	//neutron_beta->Draw("hist");
 
-	neutronfol->Add(betaCanvas);
+	//neutronfol->Add(betaCanvas);
 
-	neutronAnglesCanvas = new TCanvas("neutron_AnglesCanvas", "neutronAnglesCanvas");
-	neutronAnglesCanvas->Divide(2,1);
+	//neutronAnglesCanvas = new TCanvas("neutron_AnglesCanvas", "neutronAnglesCanvas");
+	//neutronAnglesCanvas->Divide(2,1);
 
-	TX_pos_Q_5_AoZ_2 = R3B::root_owned<TH1F>("TX_pos_Q_5_AoQ_2", " TX_pos_Q_5_AoQ_2", 500, -0.1, 0.1);
-	TY_pos_Q_5_AoZ_2 = R3B::root_owned<TH1F>("TY_pos_Q_5_AoQ_2", " TY_pos_Q_5_AoQ_2", 500, -0.1, 0.1);
+	//TX_pos_Q_5_AoZ_2 = R3B::root_owned<TH1F>("TX_pos_Q_5_AoQ_2", " TX_pos_Q_5_AoQ_2", 500, -0.1, 0.1);
+	//TY_pos_Q_5_AoZ_2 = R3B::root_owned<TH1F>("TY_pos_Q_5_AoQ_2", " TY_pos_Q_5_AoQ_2", 500, -0.1, 0.1);
 
-	TX_pos_Q_5_AoZ_2->GetXaxis()->SetTitle("TX0");
-	TY_pos_Q_5_AoZ_2->GetXaxis()->SetTitle("TY0");
+	//TX_pos_Q_5_AoZ_2->GetXaxis()->SetTitle("TX0");
+	//TY_pos_Q_5_AoZ_2->GetXaxis()->SetTitle("TY0");
 
-	neutronAnglesCanvas->cd(1);
-	TX_pos_Q_5_AoZ_2->Draw("hist");
-	neutronAnglesCanvas->cd(2);
-	TY_pos_Q_5_AoZ_2->Draw("hist");
+	//neutronAnglesCanvas->cd(1);
+	//TX_pos_Q_5_AoZ_2->Draw("hist");
+	//neutronAnglesCanvas->cd(2);
+	//TY_pos_Q_5_AoZ_2->Draw("hist");
 
-	neutronfol->Add(neutronAnglesCanvas);
+	//neutronfol->Add(neutronAnglesCanvas);
 
-	e_relCanvas = new TCanvas("e_relsCanvas", "e_relCanvas");
+	//e_relCanvas = new TCanvas("e_relsCanvas", "e_relCanvas");
 
-	neutron_e_rel = R3B::root_owned<TH1F>("neutron_e_rel", "neutron_e_rel", 500, 0, 15);
+	//neutron_e_rel = R3B::root_owned<TH1F>("neutron_e_rel", "neutron_e_rel", 500, 0, 15);
 
-	neutron_e_rel->GetXaxis()->SetTitle("e_rel");
+	//neutron_e_rel->GetXaxis()->SetTitle("e_rel");
 
-	e_relCanvas->cd();
-	neutron_e_rel->Draw("hist");
+	//e_relCanvas->cd();
+	//neutron_e_rel->Draw("hist");
 
-	neutronfol->Add(e_relCanvas);
+	//neutronfol->Add(e_relCanvas);
 
 	return kSUCCESS; 
 }
 
-void R3BTrackingS091::Reset_Tracker_Histo(){
+void R3BTrackingG249::Reset_Tracker_Histo(){
 
 	AoQ_Vs_Q_TOFD->Reset();
+	Q_TOFD_vs_TOFD_pos->Reset();
 	AoQ_Vs_Q_TOFD->Reset();
 	AoQ_tof_Vs_Q_TOFD->Reset();
 	AoQ_Vs_Q_TOFD_tpat->Reset();
@@ -357,7 +372,7 @@ void R3BTrackingS091::Reset_Tracker_Histo(){
 	return;
 }
 
-void R3BTrackingS091::Exec(Option_t* option)
+void R3BTrackingG249::Exec(Option_t* option)
 {
 	if (fNEvents / 1000. == (int)fNEvents / 1000)
 		std::cout << "\rEvents: " << fNEvents << " / " << maxevent << " (" << (int)(fNEvents * 100. / maxevent)
@@ -367,14 +382,14 @@ void R3BTrackingS091::Exec(Option_t* option)
 	fNEvents += 1;
 	is_good_event = false;
 
-	h++;
+	h_counter++;
 	Tpat = fHeader->GetTpat();//vairiable in the output tree
 
 	if(Tpat & 0xf000){
 		return;
 	}
 
-	hh++;
+	hh_counter++;
 
 	if(Tpat == 0){
 		return;
@@ -401,32 +416,38 @@ void R3BTrackingS091::Exec(Option_t* option)
 	mul_los  = fDataItems[LOS_DATA]->GetEntriesFast();
 	mul_m0   = fDataItems[MWPC0_HITDATA]->GetEntriesFast();
 	mul_m1   = fDataItems[MWPC1_HITDATA]->GetEntriesFast();
-	mul_tttx = fDataItems[TTTX_HITDATA]->GetEntriesFast();
+	mul_foot = fDataItems[FOOT_HITDATA]->GetEntriesFast();
 	mul_f32  = fDataItems[DET_FI32]->GetEntriesFast();
 	mul_f30  = fDataItems[DET_FI30]->GetEntriesFast();
 	mul_f31  = fDataItems[DET_FI31]->GetEntriesFast();
 	mul_f33  = fDataItems[DET_FI33]->GetEntriesFast();
 	mul_tofd = fDataItems[DET_TOFD]->GetEntriesFast();
 	mul_frsi = fDataItems[FRS_DATA]->GetEntriesFast();
-	mul_neuland = fDataItems[NEULAND_DATA]->GetEntriesFast();
-	hhh++;
+	//mul_neuland = fDataItems[NEULAND_DATA]->GetEntriesFast();
+	hhh_counter++;
 	if(mul_los!=1){
 		return;
 	}
-	a++;
+	a_counter++;
 	if(mul_tofd<1){
 		return;
 	}
-	b++;
-	//if(mul_m0!=1)return;
-	if(mul_m1!=1){
-		return;
+	b_counter++;
+        if(mul_foot<1){
+		return;//for now take only mul=1 in mwpcs
 	}
-	c++;
+
+	//if(mul_m0!=1)return;
+	//if(mul_m1!=1){
+	//	return;
+	//}
+	
+	c_counter++;
 	if(mul_f32 < 1 || mul_f30 < 1 || (mul_f31 < 1 && mul_f33 < 1)){
 		return;
 	}
-	d++;
+	d_counter++;
+
 	//	auto frs_DataItems = fDataItems.at(FRS_DATA);
 	//	if(frs_DataItems->GetEntriesFast() < 1) return; 
 	//	hhh++;
@@ -439,40 +460,42 @@ void R3BTrackingS091::Exec(Option_t* option)
 	double minE = -1;
 	TVector3 minvec;
 	bool n_true = false;
-	R3BNeulandHit* hit{};
-	for (auto i = 0; i < fDataItems[NEULAND_DATA]->GetEntriesFast(); ++i)
-	{
-		hit = static_cast<R3BNeulandHit*>(fDataItems[NEULAND_DATA]->At(i));
-		const Double_t tcorr = hit->GetT() - (hit->GetPosition().Mag() - 1564.) / 29.9792458;
-		if(hit->GetE() > 0. && tcorr > 59.5 && tcorr < 96.)
-		{
-			if(hit->GetT() < mintime)
-			{
-				mintime = hit->GetT();
-				minvec = hit->GetPosition();
-				minE = hit->GetE();
-				n_true = true;
-			}
-		}
-	}
+
+	//R3BNeulandHit* hit{};
+	//for (auto i = 0; i < fDataItems[NEULAND_DATA]->GetEntriesFast(); ++i)
+	//{
+	//	hit = static_cast<R3BNeulandHit*>(fDataItems[NEULAND_DATA]->At(i));
+	//	const Double_t tcorr = hit->GetT() - (hit->GetPosition().Mag() - 1564.) / 29.9792458;
+	//	if(hit->GetE() > 0. && tcorr > 59.5 && tcorr < 96.)
+	//	{
+	//		if(hit->GetT() < mintime)
+	//		{
+	//			mintime = hit->GetT();
+	//			minvec = hit->GetPosition();
+	//			minE = hit->GetE();
+	//			n_true = true;
+	//		}
+	//	}
+	//}
 	//------ Get TOFD data 
+	
 	R3BTofdHitData* tofd_hit{};
 	int mul_tofd1=0;
 	double tofdq_temp =0;
-	double tttxq_temp =0;
+	double footq_temp =0;
 	double tofd_tof_temp =0;
 	double tofd_pos =0;
 	bool is_good_tofd = false;
-	bool is_good_tttx = false;
+	bool is_good_foot = false;
 
 	for (auto i = 0; i < fDataItems[DET_TOFD]->GetEntriesFast(); ++i)
 	{
 		tofd_hit = static_cast<R3BTofdHitData*>(fDataItems[DET_TOFD]->At(i));
-		if (tofd_hit->GetDetId() == 1 && tofd_hit->GetTof() < 120 && tofd_hit->GetTof() > 100) // only hits from first plane, add Z later
+		if (tofd_hit->GetDetId() == 1/* && tofd_hit->GetTof() < 120 && tofd_hit->GetTof() > 100*/) // only hits from first plane, add Z later
 		{
 			is_good_tofd = true;
 			mul_tofd1++;
-			tofdq_temp=tofd_hit->GetEloss() - 0.2;
+			tofdq_temp=6*tofd_hit->GetEloss()/22000 - 0.2;
 			tofd_pos=tofd_hit->GetX();
 			tofd_tof_temp=tofd_hit->GetTof() - 104.2 + tof_offset;
 			//break;
@@ -481,15 +504,16 @@ void R3BTrackingS091::Exec(Option_t* option)
 	if(!is_good_tofd || mul_tofd1!=1){ 
 		return;
 	}
-	e++;
-	if(!MakeIncomingTracks()){ 
-		return;//at least one good track candidate in FOOT
-	}
-	f++;
+	Q_TOFD_vs_TOFD_pos->Fill(tofd_pos,tofdq_temp);
+	e_counter++;
+	//if(!MakeIncomingTracks()){ 
+	//	return;//at least one good track candidate in FOOT
+	//}
+	f_counter++;
 	if(!MakeOutgoingTracks()){ 
 		return;//at least one good track candidate in Fibers
 	}
-	g++;
+	g_counter++;
 	//cout << "\nGood event\n";
 	is_good_event = true;
 	cond=true;
@@ -503,27 +527,39 @@ void R3BTrackingS091::Exec(Option_t* option)
 			return;
 		}
 	}
-	if(tracks_in.size()>1 || tracks_out.size()>2){
-		return;
-	}
+	//if(tracks_in.size()>1 || tracks_out.size()>2){
+	//	return;
+	//}
 	double delta_TX1, delta_TX0, delta_TY0;
-	for (auto & tin : tracks_in){
+	//for (auto & tin : tracks_in){
 		for (auto & tout : tracks_out){
 			counter++;
-			if(tracks_in.size() == 2 && !tout.fiber){
-				continue;
+			//if(tracks_in.size() == 2 && !tout.fiber){
+			//	continue;
+			//}
+			if(function_type){
+				mdf_data[0] = 0;//tin.f2_y;
+				mdf_data[1] = 0;//tin.f2_z;
+				mdf_data[2] = 0;//tin.f1_x;
+				mdf_data[3] = tout.f32_x;
+				mdf_data[4] = tout.f32_z;
+				mdf_data[5] = (tout.last_x - tout.f32_x)/(tout.last_z - tout.f32_z);
+				mdf_data[6] = (tout.f30_y  - 0)/(tout.f30_z - 18.5);
+				//mdf_data[7] = (tout.f30_y  - tin.f2_y)/(tout.f30_z - tin.f2_z);
 			}
-			//preserve the order, it is expected by the MDF function!
-			mdf_data[0] = tin.mw1_x;
-			mdf_data[1] = tin.mw1_y;
-			mdf_data[2] = tin.mw1_z;
-			mdf_data[3] = tout.f32_x;
-			mdf_data[4] = tout.f32_z;
-			mdf_data[5] = (tout.last_x - tout.f32_x)/(tout.last_z - tout.f32_z);
-			mdf_data[6] = (tout.f30_y  - tin.mw1_y)/(tout.f30_z - tin.mw1_z);
-			// Calculate all required MDF values
+			else{
+				mdf_data[0] = 0;//tin.f2_y;
+				mdf_data[1] = 18.5;//tin.f2_z;
+				mdf_data[2] = 0;//tin.f1_x;
+				mdf_data[3] = 20.1;//tin.f1_z;
+				mdf_data[4] = tout.f32_x;
+				mdf_data[5] = tout.f32_z;
+				mdf_data[6] = (tout.last_x - tout.f32_x)/(tout.last_z - tout.f32_z);
+				mdf_data[7] = (tout.f30_y  - 0)/(tout.f30_z - 18.5);
+				//mdf_data[7] = (tout.f30_y  - tin.f2_y)/(tout.f30_z - tin.f2_z);
+			}
 
-			flight_p = MDF_FlightPath->MDF(mdf_data);
+			//flight_p = MDF_FlightPath->MDF(mdf_data);
 			poq = MDF_PoQ->MDF(mdf_data) * GladCurrent / GladReferenceCurrent;
 			tx0 = MDF_TX0->MDF(mdf_data);
 			ty0 = MDF_TY0->MDF(mdf_data);
@@ -542,14 +578,15 @@ void R3BTrackingS091::Exec(Option_t* option)
 			if(counter == 1){
 				TY0_offset = .00432;//10C
 				if(tout.fiber){
-					aoq_offset = -.1;//10C
+					//aoq_offset = +.1;//10C
 					TX0_offset = .008 + 0.0055;//10C
-					//aoq_offset = -.13;//16C
+					aoq_offset = -.1;//16C
 				}
 				else{
 					//aoq_offset = -.29;//12C
+					aoq_offset = 0.35;//10C
 					TX0_offset = .02 + 0.008;//10C
-					aoq_offset = -.25;//10C
+					//aoq_offset = -.25;//10C
 					//aoq_offset = -.39;//16C
 				}
 				maoz = maoz + aoq_offset;
@@ -577,7 +614,7 @@ void R3BTrackingS091::Exec(Option_t* option)
 				}
 				if(fabs(tofdq_temp - 5) < 0.5){
 					AoQ_vs_TOFD_pos_q_5->Fill(tofd_pos,maoz);
-					if(fabs(maoz-2.8)<0.1){
+					if(fabs(maoz-2.4)<0.1){
 						TX0_Vs_fib_pos_Q_5_AoZ_2->Fill(tout.f32_x,tx0 + TX0_offset);
 						TY0_Vs_fib_pos_Q_5_AoZ_2->Fill(tout.f32_x,ty0 + TY0_offset);
 						if(n_true)
@@ -616,20 +653,20 @@ void R3BTrackingS091::Exec(Option_t* option)
 						}
 					}
 				}
-				if(fabs(tofdq_temp - 6) < 0.5){
+				if(fabs(tofdq_temp - 6.5) < 0.5){
 						AoQ_vs_TOFD_pos_q_6->Fill(tofd_pos,maoz);
 				}
 			}
 			//TVector3 vec_PoQ(0, 0, 1);
 			TVector3 vec_PoQ(tx0 + TX0_offset, ty0, 1);
 			vec_PoQ.SetMag(poq);
-			AddTrackData(tin.mw1_x, tin.mw1_y, tin.mw1_z, vec_PoQ, tofdq_temp, maoz); // chix, chiy, quality
-		}
+			AddTrackData(0,0,0, vec_PoQ, tofdq_temp, maoz); // chix, chiy, quality
+		//}
 	}
 	return;
 }
 
-void R3BTrackingS091::FinishEvent()
+void R3BTrackingG249::FinishEvent()
 {
 	for (auto& DataItem : fDataItems)
 	{
@@ -638,64 +675,64 @@ void R3BTrackingS091::FinishEvent()
     	fTrackItems->Clear();
 	if (fNEvents / 10000. == (int)fNEvents / 10000)
 		cout << " \n finish event " 
-			<< " \n before any cuts " << h 
-			<< " \n survives offspil tpat => " << hh 
-			<< " \n survives tpat 0 => " << hhh 
+			<< " \n before any cuts " << h_counter 
+			<< " \n survives offspil tpat => " << hh_counter 
+			<< " \n survives tpat 0 => " << hhh_counter 
 			//		<< " \n survives frs != 0 => " << hhh 
-			<< " \n survives los==1 => " << a 
-			<< " \n survives mul!=0 in tofd => " << b 
-			<< " \n survives mul!=0 in mwpc1 => " << c 
-			<< " \n survives fiber mul in atleast 3 fib => " << d 
-			<< " \n survives there is at least one hit in tofd plane 1 => " << e 
-			<< " \n survives mwpc1 is not nan => " << f 
-			<< " \n survives survived the clustering in fibs => " << g 
+			<< " \n survives los==1 => " << a_counter 
+			<< " \n survives mul!=0 in tofd => " << b_counter 
+			<< " \n survives mul!=0 in mwpc1 => " << c_counter 
+			<< " \n survives fiber mul in atleast 3 fib => " << d_counter 
+			<< " \n survives there is at least one hit in tofd plane 1 => " << e_counter 
+			<< " \n survives mwpc1 is not nan => " << f_counter 
+			<< " \n survives survived the clustering in fibs => " << g_counter 
 			<< endl;
 }
 
-void R3BTrackingS091::FinishTask()
+void R3BTrackingG249::FinishTask()
 {
 	LOG(info) << "Processed " << fNEvents << " events\n\n";
-	AoQ_Vs_Q_TOFD->Write();
-	AoQ_vs_TOFD_pos_q_1->Write();
-	AoQ_vs_TOFD_pos_q_2->Write();
-	AoQ_vs_TOFD_pos_q_3->Write();
-	AoQ_vs_TOFD_pos_q_4->Write();
-	AoQ_vs_TOFD_pos_q_5->Write();
-	AoQ_vs_TOFD_pos_q_6->Write();
-	AoQ_Vs_tpat->Write();
-	AoQ_Vs_Q_TOFD_tpat->Write();
-	AoQ_tof_Vs_Q_TOFD_tpat->Write();
-	TX0_Vs_fib_pos_Q_5_AoZ_2->Write();
-	TY0_Vs_fib_pos_Q_5_AoZ_2->Write();
-	TX_pos_Q_5_AoZ_2->Write();
-	TY_pos_Q_5_AoZ_2->Write();
-	neutron_beta->Write();
-	neutron_e_rel->Write();
+	//AoQ_Vs_Q_TOFD->Write();
+	//AoQ_vs_TOFD_pos_q_1->Write();
+	//AoQ_vs_TOFD_pos_q_2->Write();
+	//AoQ_vs_TOFD_pos_q_3->Write();
+	//AoQ_vs_TOFD_pos_q_4->Write();
+	//AoQ_vs_TOFD_pos_q_5->Write();
+	//AoQ_vs_TOFD_pos_q_6->Write();
+	//AoQ_Vs_tpat->Write();
+	//AoQ_Vs_Q_TOFD_tpat->Write();
+	//AoQ_tof_Vs_Q_TOFD_tpat->Write();
+	//TX0_Vs_fib_pos_Q_5_AoZ_2->Write();
+	//TY0_Vs_fib_pos_Q_5_AoZ_2->Write();
+	//TX_pos_Q_5_AoZ_2->Write();
+	//TY_pos_Q_5_AoZ_2->Write();
+	//neutron_beta->Write();
+	//neutron_e_rel->Write();
 	//cout<<"WRITE"<<endl;
 }
 
 
-bool R3BTrackingS091::MakeIncomingTracks()
-{
-	tracks_in.clear();
-	TVector3 vertex_mwpc;
-	Track tr;
-	//Get MWPC hits, for now only first hit
-	auto m1_hit = static_cast<R3BMwpcHitData*>(fDataItems[MWPC1_HITDATA]->At(0));
-	m1_point.SetXYZ(m1_hit->GetX()*0.1, m1_hit->GetY()*0.1, 0.);//cm
+//bool R3BTrackingG249::MakeIncomingTracks()
+//{
+//	tracks_in.clear();
+//	TVector3 vertex_mwpc;
+//	Track tr;
+//	//Get MWPC hits, for now only first hit
+//	auto m1_hit = static_cast<R3BMwpcHitData*>(fDataItems[MWPC1_HITDATA]->At(0));
+//	m1_point.SetXYZ(m1_hit->GetX()*0.1, m1_hit->GetY()*0.1, 0.);//cm
+//
+//	TransformPoint(m1_point, &m1_angles, &m1_position);//lab
+//	tr.mw1_x   = m1_point.X();
+//	tr.mw1_y   = m1_point.Y();
+//	tr.mw1_z   = m1_point.Z();
+//	if(isnan(m1_point.X()) || isnan(m1_point.Y()) || isnan(m1_point.Z())){
+//		return false;
+//	}
+//	tracks_in.push_back(tr);
+//	return true;
+//}
 
-	TransformPoint(m1_point, &m1_angles, &m1_position);//lab
-	tr.mw1_x   = m1_point.X();
-	tr.mw1_y   = m1_point.Y();
-	tr.mw1_z   = m1_point.Z();
-	if(isnan(m1_point.X()) || isnan(m1_point.Y()) || isnan(m1_point.Z())){
-		return false;
-	}
-	tracks_in.push_back(tr);
-	return true;
-}
-
-void R3BTrackingS091::TransformPoint(TVector3& point, TVector3* rot, TVector3* trans)
+void R3BTrackingG249::TransformPoint(TVector3& point, TVector3* rot, TVector3* trans)
 {
 	r.SetToIdentity();
 	// First Euler rotation around Y axis
@@ -713,16 +750,158 @@ void R3BTrackingS091::TransformPoint(TVector3& point, TVector3* rot, TVector3* t
 	return;
 }
 
-R3BTrack* R3BTrackingS091::AddTrackData(double x, double y, double z, TVector3 poq_vec, Double_t charge, Double_t aoz)
+R3BTrack* R3BTrackingG249::AddTrackData(double x, double y, double z, TVector3 poq_vec, Double_t charge, Double_t aoz)
 {
 	// Filling output track info
 	add_track_counter++;
 	TClonesArray& clref = *fTrackItems;
 	Int_t size = clref.GetEntriesFast();
-	return new (clref[size]) R3BTrack(x, y, z, poq_vec.X(),  poq_vec.Y(), poq_vec.Z(), charge, aoz, 0., h, add_track_counter);
+	return new (clref[size]) R3BTrack(x, y, z, poq_vec.X(),  poq_vec.Y(), poq_vec.Z(), charge, aoz, 0., h_counter, add_track_counter);
 }
 
-bool R3BTrackingS091::IsGoodFiberHit(R3BFiberMAPMTHitData* fhit)
+bool R3BTrackingG249::IsGoodFootHit(R3BFootHitData* fhit)
+{
+	if(fhit->GetEnergy()>FootEnergyMin && fhit->GetEnergy()<FootEnergyMax)
+		return true;
+	else 
+		return false;
+}
+
+bool R3BTrackingG249::SortFootData()
+{
+	f1_hits.clear(); f2_hits.clear(); f15_hits.clear(); f16_hits.clear();
+	mul_foot = fDataItems[FOOT_HITDATA]->GetEntriesFast();
+	if(mul_foot==0) return false;
+	for (auto f=0; f<mul_foot; ++f)
+	{
+		auto foot_hit = static_cast<R3BFootHitData*>(fDataItems[FOOT_HITDATA]->At(f));
+		cout << foot_hit->GetDetId() << "foot ID" << endl;
+	if(!IsGoodFootHit(foot_hit)) continue;
+		switch(foot_hit->GetDetId())
+		{
+			case 1 ://Second FOOT1 for (Y)
+				f1_hits.push_back(f);
+				break;
+			case 2 ://First FOOT2 (X)
+				f2_hits.push_back(f);
+				break;
+			case 15 ://Last FOOT15 (X) 
+				f15_hits.push_back(f);
+				break;
+			case 16 ://3rd FOOT16 (Y)
+				f16_hits.push_back(f);
+				break;
+		}
+	}
+	if(f1_hits.empty() || f2_hits.empty() || f15_hits.empty() || f16_hits.empty())     
+		return false; 
+	mul_f1  = f1_hits.size(); mul_f2  = f2_hits.size();
+	mul_f15 = f15_hits.size(); mul_f16 = f16_hits.size();
+	return true;
+}
+
+bool R3BTrackingG249::MakeIncomingTracks()
+{
+//	if(fDataItems[MWPC0_HITDATA]->GetEntriesFast()==0 || fDataItems[MWPC1_HITDATA]->GetEntriesFast()==0) 
+//		return false;
+	tracks_in.clear();
+	if(!SortFootData()) return false;//at least 1 hit in every FOOT
+	//TVector3 vertex_mwpc, vertex_foot;//projection to the center of the target (0,0,0)
+	double tx_in = -999;
+	double ty_in = -999; 
+	double dx_vertex = -999;
+	double dy_vertex = -999;
+	double dx_angle = -999;
+	double dy_angle = -999;	
+	Track tr;
+	////Get MWPC hits, for now only first hit
+	//auto m0_hit = static_cast<R3BMwpcHitData*>(fDataItems[MWPC0_HITDATA]->At(0));
+	//auto m1_hit = static_cast<R3BMwpcHitData*>(fDataItems[MWPC1_HITDATA]->At(0));
+	//m0_point.SetXYZ(m0_hit->GetX()*0.1, m0_hit->GetY()*0.1, 0.);//cm
+	//m1_point.SetXYZ(m1_hit->GetX()*0.1, m1_hit->GetY()*0.1, 0.);//cm
+	//m0_point_i1=m0_point;
+	//m1_point_i1=m1_point;	
+
+	//TransformPoint(m0_point, &m0_angles, &m0_position);//lab
+	//TransformPoint(m1_point, &m1_angles, &m1_position);//lab
+
+	////Fill output tree variables
+	//m0_X = m0_point.X();  m0_Y = m0_point.Y();  m0_Z = m0_point.Z();
+	//m1_X = m1_point.X();  m1_Y = m1_point.Y();  m1_Z = m1_point.Z();
+	////cout<<"m0_x--> "<<m0_X<<endl;
+	////------- Project mwpc track to the center of the target
+	//tx_in = (m0_point.X() - m1_point.X())/(m0_point.Z() - m1_point.Z());
+	//ty_in = (m0_point.Y() - m1_point.Y())/(m0_point.Z() - m1_point.Z()); 
+	//vertex_mwpc.SetX((m1_point.X() - tx_in * m1_point.Z())/*-1.111*/);
+	//vertex_mwpc.SetY((m1_point.Y() - ty_in * m1_point.Z())/*-0.91*/);
+	//vertex_mwpc.SetZ(0);
+
+	//----- Make track candidates in FOOT and project them to the center of the target
+	for (auto & f2 : f2_hits){
+		auto f2_hit = static_cast<R3BFootHitData*>(fDataItems[FOOT_HITDATA]->At(f2));
+		f2_point.SetXYZ(0, f2_hit->GetPosLab().Y() * 0.1, 0.); //cm
+		f2_point_i=f2_point;
+		TransformPoint(f2_point,  &f2_angles,  &f2_position);
+
+		for (auto & f1 : f1_hits){
+			auto f1_hit = static_cast<R3BFootHitData*>(fDataItems[FOOT_HITDATA]->At(f1));
+			f1_point.SetXYZ(f1_hit->GetPosLab().X() * 0.1 , 0, 0.); //cm
+			f1_point_i=f1_point;
+			TransformPoint(f1_point,  &f1_angles,  &f1_position);       
+			for (auto & f16 : f16_hits){
+				auto f16_hit = static_cast<R3BFootHitData*>(fDataItems[FOOT_HITDATA]->At(f16));
+				f16_point.SetXYZ(0, f16_hit->GetPosLab().Y() * 0.1, 0); //cm
+				f16_point_i=f16_point;
+				TransformPoint(f16_point, &f16_angles, &f16_position);
+
+				for (auto & f15 : f15_hits){
+					auto f15_hit = static_cast<R3BFootHitData*>(fDataItems[FOOT_HITDATA]->At(f15));
+					f15_point.SetXYZ(f15_hit->GetPosLab().X() * 0.1, 0, 0); //cm
+					f15_point_i=f15_point;
+					TransformPoint(f15_point, &f15_angles, &f15_position);
+
+					//project foot track to the center of the target
+					//tr.tx0 = (f15_point.X() - f1_point.X())/(f15_point.Z() - f1_point.Z());
+					//tr.ty0 = (f16_point.Y() - f2_point.Y())/(f16_point.Z() - f2_point.Z());
+					//vertex_foot.SetX(f1_point.X() - tr.tx0 * f1_point.Z());
+					//vertex_foot.SetY(f2_point.Y() - tr.ty0 * f2_point.Z());
+					//vertex_foot.SetZ(0);
+					////Condition on the vertex matching
+					//dx_vertex = vertex_foot.X() - vertex_mwpc.X();
+					//dy_vertex = vertex_foot.Y() - vertex_mwpc.Y();
+					//dx_angle = tr.tx0 - tx_in;
+					//dy_angle = tr.ty0 - ty_in;
+					////G249
+					//if((dx_vertex>-0.6 && dx_vertex<0.6) && (dy_vertex>-0.7 && dy_vertex<0.7)){
+					//	if(abs(dx_angle)<0.02 && abs(dy_angle)<0.04){
+							//s509
+							tr.f1_x   = f1_point.X();
+							tr.f1_z   = f1_point.Z();
+							tr.f2_y   = f2_point.Y();
+							tr.f2_z   = f2_point.Z();
+							tr.f15_x  = f15_point.X();
+							tr.f15_z  = f15_point.Z();
+							tr.f16_y  = f16_point.Y();
+							tr.f16_z  = f16_point.Z();
+
+							tr.f1_Q   = f1_hit->GetEnergy();
+							tr.f2_Q   = f2_hit->GetEnergy();
+							tr.f15_Q   = f15_hit->GetEnergy();
+							tr.f16_Q   = f16_hit->GetEnergy();
+
+							//tr.mw_ax  = tx_in;
+							//tr.mw_ay  = ty_in;
+							tracks_in.push_back(tr);
+						//}
+					//}
+				}
+			}
+		}
+	}
+	return true;
+}
+
+bool R3BTrackingG249::IsGoodFiberHit(R3BFiberMAPMTHitData* fhit)
 {
 	if((fhit->GetEloss() > FiberEnergyMin) && (fhit->GetEloss() < FiberEnergyMax) && 
 			(fhit->GetTime() < 20000 && fhit->GetTime()>(-20000) )){
@@ -732,7 +911,7 @@ bool R3BTrackingS091::IsGoodFiberHit(R3BFiberMAPMTHitData* fhit)
 		return false;
 	}
 }
-bool R3BTrackingS091::MakeOutgoingTracks()
+bool R3BTrackingG249::MakeOutgoingTracks()
 {
 	if(fDataItems[DET_FI32]->GetEntriesFast() > 3 || fDataItems[DET_FI30]->GetEntriesFast() > 3 || (fDataItems[DET_FI33]->GetEntriesFast() > 3 || fDataItems[DET_FI31]->GetEntriesFast() > 3)){
 		return false;
@@ -1135,4 +1314,4 @@ bool R3BTrackingS091::MakeOutgoingTracks()
 	return true;
 }
 
-ClassImp(R3BTrackingS091);
+ClassImp(R3BTrackingG249);

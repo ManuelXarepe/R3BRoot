@@ -321,7 +321,7 @@ InitStatus R3BRpcOnlineSpectra::Init()
 
     /* ----- Cal Histograms ----- */
     stripCalTimeCorr =
-        R3B::root_owned<TH2F>("strip_Cal_Time_Corr", "Strip:Time_Left_Vs_Time_Right", 5000, -3500, -2950, 5000,-3500, -2950);
+        R3B::root_owned<TH2F>("strip_Cal_Time_Corr", "Strip:Time_Left_Vs_Time_Right", 5000, -800, -300, 5000,-800, -300);
     stripCalToTCorr =
         R3B::root_owned<TH2F>("strip_Cal_ToT_Corr", "Strip:ToT_Left_Vs_ToT_Right", 1000, -10, 50, 1000, -10, 50);
 
@@ -393,13 +393,13 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtFineHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
 
         sprintf(name, "Time_Pmt_%i_TOP", i + 1);
-        pmtPreCalTimeHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -3500, -2500);
+        pmtPreCalTimeHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -1000, 0);
 
         sprintf(name, "ToT_Pmt_%i_TOP", i + 1);
         pmtPreCalTotHistoTop[i] = R3B::root_owned<TH1F>(name, name, 2000, 0, 400);
 
 	sprintf(name, "Tof_Pmt_%i_TOP", i + 1);
-        pmtPreCalTofHistoTop[i] = R3B::root_owned<TH1F>(name, name, 1000, -500, -100);
+        pmtPreCalTofHistoTop[i] = R3B::root_owned<TH1F>(name, name, 20000,-400, 400);
 
         sprintf(name, "Coarse_Time_Pmt_%i_BOTTOM", i + 1);
         pmtCoarseHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 2200);
@@ -408,10 +408,10 @@ InitStatus R3BRpcOnlineSpectra::Init()
         pmtFineHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 600);
 
         sprintf(name, "Time_Pmt_%i_BOTTOM", i + 1);
-        pmtPreCalTimeHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -3500, -2500);
+        pmtPreCalTimeHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, -1000, -0);
 
 	sprintf(name, "Tof_Pmt_%i_BOTTOM", i + 1);
-        pmtPreCalTofHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 2000, -500, -100);
+        pmtPreCalTofHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 20000, -400, 400);
 
         sprintf(name, "ToT_Pmt_%i_BOTTOM", i + 1);
         pmtPreCalTotHistoBottom[i] = R3B::root_owned<TH1F>(name, name, 1000, 0, 400);
@@ -823,7 +823,8 @@ void R3BRpcOnlineSpectra::Reset_RPC_Histo()
         pmtPreCalTot_vs_TofHistoTop[i]->Reset();
         pmtPreCalTot_vs_TofHistoBottom[i]->Reset();
     }
-
+    stripLeftTimeCorr->Reset();
+    stripRightTimeCorr->Reset();
     stripCoarseLeftCorr->Reset();
     stripCoarseRightCorr->Reset();
     stripFineLeftCorr->Reset();
@@ -982,6 +983,8 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
 
         /* ----------------- PreCal EventLoop ------------------*/
         auto nPreCalHits = fPreCalDataItems->GetEntriesFast();
+	double time1 = -9999;
+	double time2 = -9999;
 
         for (Int_t ihit = 0; ihit < nPreCalHits; ihit++)
         {
@@ -1010,22 +1013,24 @@ void R3BRpcOnlineSpectra::Exec(Option_t* option)
 
             if (hit->GetDetId() == 1)
             {
-
                 if (side == 0)
                 {
+	            time1 = hit->GetTime();
                     pmtPreCalTimeHistoTop[hit->GetChannelId() - 1]->Fill(hit->GetTime());
-                    pmtPreCalTofHistoTop[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"));
-                    pmtPreCalTot_vs_TofHistoTop[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"),hit->GetTot());
+		    pmtPreCalTofHistoTop[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"));
+		    pmtPreCalTot_vs_TofHistoTop[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"),hit->GetTot());
                     pmtPreCalTotHistoTop[hit->GetChannelId() - 1]->Fill(hit->GetTot());
                 }
 
                 if (side == 1)
                 {
+		    time2 = hit->GetTime();
                     pmtPreCalTimeHistoBottom[hit->GetChannelId() - 1]->Fill(hit->GetTime());
-                    pmtPreCalTofHistoBottom[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"));
-                    pmtPreCalTot_vs_TofHistoBottom[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStart(), "trb", "vftx"),hit->GetTot());
+                    pmtPreCalTofHistoBottom[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStartMaster(), "trb", "vftx"));
+                    pmtPreCalTot_vs_TofHistoBottom[hit->GetChannelId() - 1]->Fill(fTimeStitch->GetTime(hit->GetTime() - fEventHeader->GetTStartMaster(), "trb", "vftx"),hit->GetTot());
                     pmtPreCalTotHistoBottom[hit->GetChannelId() - 1]->Fill(hit->GetTot());
                 }
+		pmtPreCalTofHistoBottom[2]->Fill(fabs(fEventHeader->GetTStart()- fEventHeader->GetTStartMaster()));
             }
         }
 

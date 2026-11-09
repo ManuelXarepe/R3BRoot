@@ -264,6 +264,8 @@ class R3BRpcOnlineSpectra : public FairTask
     /*------------ Efficiency Canvases --------*/
     TCanvas* stripMultCanvas;
     TCanvas* efficiencyCanvas;
+    TCanvas* tpatCanvas;
+
 
     /*--------- Efficiency Histograms ----------*/
     TH1F* stripMultHisto;
@@ -278,6 +280,7 @@ class R3BRpcOnlineSpectra : public FairTask
     TH1F* hEfficiencyHisto_V2;
     TH1F* hStripEffHisto_V2;
     TH1F* hBarEffHisto_V2;
+    TH1F* htpat;
 
     Int_t fon_spill_mask;
 
